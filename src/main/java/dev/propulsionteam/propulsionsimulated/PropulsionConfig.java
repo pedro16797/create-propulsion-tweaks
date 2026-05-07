@@ -31,8 +31,10 @@ public class PropulsionConfig {
     public static final ModConfigSpec.DoubleValue VECTOR_THRUSTER_BASE_THRUST;
     public static final ModConfigSpec.DoubleValue MULTIBLOCK_2X_THRUST_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue MULTIBLOCK_3X_THRUST_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue MULTIBLOCK_4X_THRUST_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue MULTIBLOCK_2X_FUEL_EFFICIENCY;
     public static final ModConfigSpec.DoubleValue MULTIBLOCK_3X_FUEL_EFFICIENCY;
+    public static final ModConfigSpec.DoubleValue MULTIBLOCK_4X_FUEL_EFFICIENCY;
     public static final ModConfigSpec.BooleanValue DAMAGE_ENTITIES;
     public static final ModConfigSpec.IntValue DAMAGE_TICK_INTERVAL;
     public static final ModConfigSpec.DoubleValue NOZZLE_OFFSET_FROM_CENTER;
@@ -47,7 +49,6 @@ public class PropulsionConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FUEL_PROPERTIES;
     public static final Map<String, ModConfigSpec.ConfigValue<String>> THRUSTER_DYE_COLORS = new LinkedHashMap<>();
     public static final ModConfigSpec.DoubleValue TILT_ADAPTER_MAX_ANGLE;
-    public static final ModConfigSpec.IntValue CABLE_ENERGY_TRANSFER;
 
     public static final ModConfigSpec.BooleanValue DEBUG_THRUSTER;
     public static final ModConfigSpec.BooleanValue DEBUG_BURNER;
@@ -76,8 +77,6 @@ public class PropulsionConfig {
     public static final ModConfigSpec.ConfigValue<Boolean> BLAZE_BURNERS_HEAT_STIRLING_ENGINES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FUEL_EFFICIENCY_RATES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FUEL_BURN_RATE_RATES;
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> CORAL_FUEL_CONVERSION_RATES;
-
     static {
         //#region Server
         SERVER_BUILDER.push("thruster");
@@ -130,10 +129,14 @@ public class PropulsionConfig {
                 .defineInRange("multiblock2xThrustMultiplier", 1.25d, 0.01d, 10.0d);
             MULTIBLOCK_3X_THRUST_MULTIPLIER = SERVER_BUILDER.comment("Thrust multiplier for a 3x3x3 multiblock thruster (e.g. 1.25 = 25% bonus).")
                 .defineInRange("multiblock3xThrustMultiplier", 1.5d, 0.01d, 10.0d);
+            MULTIBLOCK_4X_THRUST_MULTIPLIER = SERVER_BUILDER.comment("Thrust multiplier for a 4x4x4 multiblock thruster.")
+                .defineInRange("multiblock4xThrustMultiplier", 1.75d, 0.01d, 10.0d);
             MULTIBLOCK_2X_FUEL_EFFICIENCY = SERVER_BUILDER.comment("Fuel cost multiplier for a 2x2x2 multiblock thruster (e.g. 1.0 = no reduction, 0.8 = 20% cheaper).")
                 .defineInRange("multiblock2xFuelEfficiency", 0.8d, 0.01d, 10.0d);
             MULTIBLOCK_3X_FUEL_EFFICIENCY = SERVER_BUILDER.comment("Fuel cost multiplier for a 3x3x3 multiblock thruster (e.g. 0.95 = 5% cheaper).")
                 .defineInRange("multiblock3xFuelEfficiency", 0.6d, 0.01d, 10.0d);
+            MULTIBLOCK_4X_FUEL_EFFICIENCY = SERVER_BUILDER.comment("Fuel cost multiplier for a 4x4x4 multiblock thruster.")
+                .defineInRange("multiblock4xFuelEfficiency", 0.4d, 0.01d, 10.0d);
         SERVER_BUILDER.pop();
 
         SERVER_BUILDER.push("creativeVectorThruster");
@@ -203,11 +206,6 @@ public class PropulsionConfig {
                 .define("Blaze burners heat stirling engines", true);
         SERVER_BUILDER.pop();
 
-        SERVER_BUILDER.push("Cable");
-            CABLE_ENERGY_TRANSFER = SERVER_BUILDER.comment("Maximum FE moved per tick by a single cable block.")
-                .defineInRange("Energy transfer", 1_000, 1, 100000000);
-        SERVER_BUILDER.pop();
-
         SERVER_BUILDER.push("Fuel Configuration");
             FUEL_PROPERTIES = SERVER_BUILDER.comment(
                     "Fuel table entries as '<namespace:fluid>=<efficiency_percent>,<burn_rate_percent>'.",
@@ -224,12 +222,6 @@ public class PropulsionConfig {
                     "Example: createdieselgenerators:gasoline=80")
                 .defineListAllowEmpty("fuelBurnRateRates", PropulsionConfig::defaultFuelBurnRateRates, () -> "",
                     value -> value instanceof String);
-            CORAL_FUEL_CONVERSION_RATES = SERVER_BUILDER.comment(
-                    "Coral conversion entries as '<namespace:fluid>=<fe_per_mb>'.",
-                    "Example: createpropulsion:coral=16")
-                .defineListAllowEmpty("coralFuelConversionRates", PropulsionConfig::defaultCoralFuelConversionRates, () -> "",
-                    value -> value instanceof String);
-
         SERVER_BUILDER.pop();
 
         SERVER_BUILDER.push("thrusterDyeColors");
@@ -288,7 +280,6 @@ public class PropulsionConfig {
     private static List<String> defaultFuelProperties() {
         return List.of(
                 "createpropulsion:turpentine=80,120",
-                "minecraft:lava=75,100",
                 "createdieselgenerators:plant_oil=55,170",
                 "immersiveengineering:plantoil=55,170",
                 "createdieselgenerators:ethanol=70,140",
@@ -311,20 +302,17 @@ public class PropulsionConfig {
                 "mekanism:hydrogen=120,80",
                 "createaddition:bioethanol=75,135",
                 "createaddition:seed_oil=55,170",
+                "createaddition:biomass=50,180",
+                "createaddition:biofuel=80,120",
                 "northstar:methane=105,95",
                 "northstar:liquid_hydrogen=125,80",
                 "immersivepetroleum:diesel_sulfur=100,100"
         );
     }
 
-    private static List<String> defaultCoralFuelConversionRates() {
-        return List.of("createpropulsion:coral=16");
-    }
-
     private static List<String> defaultFuelEfficiencyRates() {
         return List.of(
                 "createpropulsion:turpentine=80",
-                "minecraft:lava=75",
                 "createdieselgenerators:plant_oil=55",
                 "immersiveengineering:plantoil=55",
                 "createdieselgenerators:ethanol=70",
@@ -347,6 +335,8 @@ public class PropulsionConfig {
                 "mekanism:hydrogen=120",
                 "createaddition:bioethanol=75",
                 "createaddition:seed_oil=55",
+                "createaddition:biomass=50",
+                "createaddition:biofuel=80",
                 "northstar:methane=105",
                 "northstar:liquid_hydrogen=125",
                 "immersivepetroleum:diesel_sulfur=100"
@@ -356,7 +346,6 @@ public class PropulsionConfig {
     private static List<String> defaultFuelBurnRateRates() {
         return List.of(
                 "createpropulsion:turpentine=120",
-                "minecraft:lava=100",
                 "createdieselgenerators:plant_oil=170",
                 "immersiveengineering:plantoil=170",
                 "createdieselgenerators:ethanol=140",
@@ -379,6 +368,8 @@ public class PropulsionConfig {
                 "mekanism:hydrogen=80",
                 "createaddition:bioethanol=135",
                 "createaddition:seed_oil=170",
+                "createaddition:biomass=180",
+                "createaddition:biofuel=120",
                 "northstar:methane=95",
                 "northstar:liquid_hydrogen=80",
                 "immersivepetroleum:diesel_sulfur=100"
@@ -397,14 +388,6 @@ public class PropulsionConfig {
 
     public static boolean isDyeConfigured(String itemId) {
         return THRUSTER_DYE_COLORS.containsKey(itemId);
-    }
-
-    public static List<? extends String> getCoralFuelConversionRatesOrDefault() {
-        try {
-            return CORAL_FUEL_CONVERSION_RATES.get();
-        } catch (IllegalStateException ignored) {
-            return defaultCoralFuelConversionRates();
-        }
     }
 
     public static List<? extends String> getFuelBurnRateRatesOrDefault() {

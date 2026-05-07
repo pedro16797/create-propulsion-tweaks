@@ -1,8 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "createpropulsion:redstone_converter",
-    "createpropulsion:redstone_transmission",
-    "createpropulsion:tilt_adapter"
-  ]
-}

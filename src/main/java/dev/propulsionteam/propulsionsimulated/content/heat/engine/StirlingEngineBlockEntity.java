@@ -1,6 +1,7 @@
 package dev.propulsionteam.propulsionsimulated.content.heat.engine;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
@@ -16,16 +17,25 @@ import com.simibubi.create.foundation.utility.CreateLang;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 
 public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity implements IHeatConsumer {
     public static final float MAX_GENERATED_RPM = 256.0f;
     public static final float HEAT_CONSUMPTION_RATE = 1.0f;
 
     protected StirlingScrollValueBehaviour targetSpeedBehaviour;
+    @javax.annotation.Nullable
+    protected BlockPos controllerPos;
+    protected boolean isMultiblock = false;
+    protected boolean updateConnectivity = true;
+
     private int activeTicks = 0;
     private boolean firstTick = true;
 
@@ -96,6 +106,19 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             }
         }
 
+        if (updateConnectivity) {
+            updateConnectivity = false;
+            if (isController() && !isMultiblock) {
+                tryAssemble();
+            }
+        }
+
+        if (isController() && isMultiblock) {
+            if (!isValidMultiblock(worldPosition)) {
+                disassembleMulti();
+            }
+        }
+
         boolean currentlyActive = isEngineActive();
         if (wasEngineActive != currentlyActive) {
             wasEngineActive = currentlyActive;
@@ -112,9 +135,128 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         tickBlazeBurnerHeat();
     }
 
+    public boolean isController() {
+        return controllerPos == null;
+    }
+
+    @javax.annotation.Nullable
+    public StirlingEngineBlockEntity getControllerBE() {
+        if (isController() || level == null) return this;
+        BlockEntity be = level.getBlockEntity(controllerPos);
+        return be instanceof StirlingEngineBlockEntity s ? s : null;
+    }
+
+    protected void tryAssemble() {
+        for (int dx = -1; dx <= 0; dx++) {
+            for (int dz = -1; dz <= 0; dz++) {
+                BlockPos origin = worldPosition.offset(dx, 0, dz);
+                if (isValidCube(origin)) {
+                    formMulti(origin);
+                    return;
+                }
+            }
+        }
+    }
+
+    protected boolean isValidCube(BlockPos origin) {
+        for (int x = 0; x < 2; x++) {
+            for (int z = 0; z < 2; z++) {
+                for (int y = 0; y < 2; y++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+                    if (!(state.getBlock() instanceof StirlingEngineBlock)) return false;
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (!(be instanceof StirlingEngineBlockEntity s)) return false;
+                    if (s.isMultiblock) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    protected void formMulti(BlockPos origin) {
+        for (int x = 0; x < 2; x++) {
+            for (int z = 0; z < 2; z++) {
+                for (int y = 0; y < 2; y++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    StirlingEngineBlockEntity s = (StirlingEngineBlockEntity) level.getBlockEntity(pos);
+                    s.controllerPos = origin;
+                    s.isMultiblock = true;
+                    s.setChanged();
+                    s.sendData();
+                }
+            }
+        }
+        StirlingEngineBlockEntity controller = (StirlingEngineBlockEntity) level.getBlockEntity(origin);
+        controller.controllerPos = null;
+        controller.updateGeneratedRotation();
+    }
+
+    public void disassembleMulti() {
+        if (!isController() || !isMultiblock) return;
+        BlockPos origin = worldPosition;
+        for (int x = 0; x < 2; x++) {
+            for (int z = 0; z < 2; z++) {
+                for (int y = 0; y < 2; y++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (be instanceof StirlingEngineBlockEntity s) {
+                        s.isMultiblock = false;
+                        s.controllerPos = null;
+                        s.updateConnectivity = true;
+                        s.updateGeneratedRotation();
+                        s.setChanged();
+                        s.sendData();
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean isValidMultiblock(BlockPos origin) {
+        for (int x = 0; x < 2; x++) {
+            for (int z = 0; z < 2; z++) {
+                for (int y = 0; y < 2; y++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+                    if (!(state.getBlock() instanceof StirlingEngineBlock)) return false;
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (!(be instanceof StirlingEngineBlockEntity s)) return false;
+                    if (s.getControllerBE() != this) return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private void tickBlazeBurnerHeat() {
         if (!isEngineActive()) return;
         if (!PropulsionConfig.BLAZE_BURNERS_HEAT_STIRLING_ENGINES.get()) return;
+
+        if (isMultiblock) {
+            if (isController()) {
+                boolean allSuperheated = true;
+                for (int x = 0; x < 2; x++) {
+                    for (int z = 0; z < 2; z++) {
+                        BlockPos belowPos = worldPosition.offset(x, -1, z);
+                        BlockState below = level.getBlockState(belowPos);
+                        if (!(below.getBlock() instanceof BlazeBurnerBlock) ||
+                            !below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL) ||
+                            !below.getValue(BlazeBurnerBlock.HEAT_LEVEL).isAtLeast(HeatLevel.SEETHING)) {
+                            allSuperheated = false;
+                            break;
+                        }
+                    }
+                    if (!allSuperheated) break;
+                }
+                if (allSuperheated) {
+                    boolean wasInactive = activeTicks == 0;
+                    activeTicks = 3;
+                    if (wasInactive) updateGeneratedRotation();
+                }
+            }
+            return;
+        }
 
         BlockState below = level.getBlockState(worldPosition.below());
         if (!(below.getBlock() instanceof BlazeBurnerBlock)) return;
@@ -161,6 +303,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
     @Override
     public float getGeneratedSpeed() {
+        if (!isController()) return 0f;
         if (!isEngineActive() || activeTicks <= 0) return 0f;
         int generatedRPM = targetSpeedBehaviour.getRPM();
         return convertToDirection(generatedRPM, getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING));
@@ -168,12 +311,18 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
     @Override
     public float calculateAddedStressCapacity() {
+        if (!isController()) return 0f;
         if (!isEngineActive() || activeTicks <= 0) return 0f;
         float rpm = targetSpeedBehaviour.getUnsignedRPM();
         if (rpm == 0) return 0f; 
 
         float stressFactor = MAX_GENERATED_RPM / rpm;
-        float capacity = stressFactor * PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
+        float baseCapacity = PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
+        float capacity = stressFactor * baseCapacity;
+
+        if (isMultiblock) {
+            capacity *= 16f;
+        }
 
         this.lastCapacityProvided = capacity;
         return capacity;
@@ -221,6 +370,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         compound.putInt("activeTicks", activeTicks);
         compound.putBoolean("isPowered", isPowered);
         compound.putBoolean("computerActive", computerActive);
+        compound.putBoolean("isMultiblock", isMultiblock);
+        if (controllerPos != null) {
+            compound.putLong("controllerPos", controllerPos.asLong());
+        }
     }
 
     @Override
@@ -232,6 +385,12 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             computerActive = compound.getBoolean("computerActive");
         } else {
             computerActive = true;
+        }
+        isMultiblock = compound.getBoolean("isMultiblock");
+        if (compound.contains("controllerPos")) {
+            controllerPos = BlockPos.of(compound.getLong("controllerPos"));
+        } else {
+            controllerPos = null;
         }
     }
 }
