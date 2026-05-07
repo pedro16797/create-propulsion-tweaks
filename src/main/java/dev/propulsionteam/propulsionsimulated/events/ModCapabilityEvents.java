@@ -1,11 +1,8 @@
 package dev.propulsionteam.propulsionsimulated.events;
 
 import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
-import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.PassthroughFluidHandler;
-import dev.propulsionteam.propulsionsimulated.content.cable.hub.CableHubBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlockEntity;
@@ -39,27 +36,6 @@ public class ModCapabilityEvents {
             PropulsionBlockEntities.ION_THRUSTER_BLOCK_ENTITY.get(),
             (be, side) -> ((IonThrusterBlockEntity) be).getEnergyHandler(side)
         );
-        event.registerBlockEntity(
-            Capabilities.FluidHandler.BLOCK,
-            PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
-            (be, side) -> ((CoralGeneratorBlockEntity) be).getFluidHandler(side)
-        );
-        event.registerBlockEntity(
-            Capabilities.EnergyStorage.BLOCK,
-            PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
-            (be, side) -> ((CoralGeneratorBlockEntity) be).getEnergyHandler(side)
-        );
-        event.registerBlockEntity(
-            Capabilities.EnergyStorage.BLOCK,
-            PropulsionBlockEntities.CABLE_HUB_BLOCK_ENTITY.get(),
-            (be, side) -> ((CableHubBlockEntity) be).getEnergyHandler(side)
-        );
-        event.registerBlockEntity(
-            Capabilities.EnergyStorage.BLOCK,
-            PropulsionBlockEntities.FE_CABLE_BLOCK_ENTITY.get(),
-            (be, side) -> ((FeCableBlockEntity) be).getEnergyHandler(side)
-        );
-
         registerComputerCraftCapabilitiesIfAvailable(event);
     }
 
@@ -106,11 +82,6 @@ public class ModCapabilityEvents {
             event.registerBlockEntity(
                 capability,
                 PropulsionBlockEntities.TILT_ADAPTER_BLOCK_ENTITY.get(),
-                (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
-            );
-            event.registerBlockEntity(
-                capability,
-                PropulsionBlockEntities.CORAL_GENERATOR_BLOCK_ENTITY.get(),
                 (be, side) -> be.computerBehaviour == null ? null : be.computerBehaviour.getPeripheralCapability()
             );
         } catch (Throwable ignored) {

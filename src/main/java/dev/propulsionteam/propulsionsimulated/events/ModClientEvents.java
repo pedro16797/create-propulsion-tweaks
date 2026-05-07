@@ -79,33 +79,6 @@ public class ModClientEvents {
                 return 0xFFD69E49;
             }
         }, PropulsionFluids.TURPENTINE_TYPE);
-
-        event.registerFluidType(new IClientFluidTypeExtensions() {
-            @Override
-            public ResourceLocation getStillTexture() {
-                return ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "block/coral_still");
-            }
-
-            @Override
-            public ResourceLocation getFlowingTexture() {
-                return ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "block/coral_flow");
-            }
-
-            @Override
-            public int getTintColor() {
-                return 0xFFFFFFFF;
-            }
-
-            @Override
-            public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
-                return 0xFFFFFFFF;
-            }
-
-            @Override
-            public int getTintColor(FluidStack stack) {
-                return 0xFFFFFFFF;
-            }
-        }, PropulsionFluids.CORAL_TYPE);
     }
 
     @SubscribeEvent
@@ -113,8 +86,6 @@ public class ModClientEvents {
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.TURPENTINE.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_TURPENTINE.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.CORAL.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(PropulsionFluids.FLOWING_CORAL.get(), RenderType.translucent());
         });
 
         PonderIndex.addPlugin(new DeltaPonderPlugin());

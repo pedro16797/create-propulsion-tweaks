@@ -49,6 +49,7 @@ public class ThrusterRenderer extends SmartBlockEntityRenderer<ThrusterBlockEnti
     private static PartialModel getMultiblockModel(int width) {
         if (width == 2) return PropulsionPartialModels.THRUSTER_MULTIBLOCK_2X2X2;
         if (width == 3) return PropulsionPartialModels.THRUSTER_MULTIBLOCK_3X3X3;
+        if (width == 4) return PropulsionPartialModels.THRUSTER_MULTIBLOCK_4X4X4;
         return null;
     }
 
