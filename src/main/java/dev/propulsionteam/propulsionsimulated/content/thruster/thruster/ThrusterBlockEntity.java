@@ -595,16 +595,24 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (particleCountMultiplier <= 0) return;
         double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
 
-        float velocityScale = width == 2 ? 1.15f : 1.3f;
+        float velocityScale = 1.0f;
+        if (width == 2) velocityScale = 1.15f;
+        else if (width == 3) velocityScale = 1.3f;
+        else if (width == 4) velocityScale = 2.6f; // Reaches twice as far as 3x3 (approx)
+
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
             .mul(4.0f * emissionScale * velocityScale * particleVelocityMultiplier);
         ParticleOptions particleData = createParticleOptions();
 
         double speedPerTick = particleVelocity.length();
         int streamParticles = Math.max(1, (int) Math.ceil(speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier));
-        int crossSectionParticles = Math.max(1, (int) Math.round((width == 2 ? 14 : 28) * particleCountMultiplier));
+        int baseCross = width == 2 ? 14 : (width == 3 ? 28 : 56);
+        int crossSectionParticles = Math.max(1, (int) Math.round(baseCross * particleCountMultiplier));
         int particlesToSpawn = Math.max(streamParticles, crossSectionParticles);
-        double plumeRadius = width == 2 ? 0.45 : 0.7;
+        double plumeRadius = 0.35;
+        if (width == 2) plumeRadius = 0.45;
+        else if (width == 3) plumeRadius = 0.7;
+        else if (width == 4) plumeRadius = 1.2;
         for (int i = 0; i < particlesToSpawn; i++) {
             double ox = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
             double oy = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;

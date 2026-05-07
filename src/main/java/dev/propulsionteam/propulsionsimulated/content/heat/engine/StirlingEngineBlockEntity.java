@@ -16,6 +16,7 @@ import com.simibubi.create.foundation.utility.CreateLang;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -145,24 +146,28 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     protected void tryAssemble() {
-        for (int dx = -1; dx <= 0; dx++) {
-            for (int dz = -1; dz <= 0; dz++) {
-                BlockPos origin = worldPosition.offset(dx, 0, dz);
-                if (isValidCube(origin)) {
-                    formMulti(origin);
-                    return;
+        for (int dy = -1; dy <= 0; dy++) {
+            for (int dx = -1; dx <= 0; dx++) {
+                for (int dz = -1; dz <= 0; dz++) {
+                    BlockPos origin = worldPosition.offset(dx, dy, dz);
+                    if (isValidCube(origin)) {
+                        formMulti(origin);
+                        return;
+                    }
                 }
             }
         }
     }
 
     protected boolean isValidCube(BlockPos origin) {
+        Direction facing = getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING);
         for (int x = 0; x < 2; x++) {
             for (int z = 0; z < 2; z++) {
                 for (int y = 0; y < 2; y++) {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if (!(state.getBlock() instanceof StirlingEngineBlock)) return false;
+                    if (state.getValue(StirlingEngineBlock.HORIZONTAL_FACING) != facing) return false;
                     BlockEntity be = level.getBlockEntity(pos);
                     if (!(be instanceof StirlingEngineBlockEntity s)) return false;
                     if (s.isMultiblock) return false;
