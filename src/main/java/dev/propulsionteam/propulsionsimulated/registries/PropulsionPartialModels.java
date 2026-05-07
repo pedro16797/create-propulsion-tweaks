@@ -6,8 +6,6 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.minecraft.resources.ResourceLocation;
 
 public class PropulsionPartialModels {
-    //Lodestone
-    public static final PartialModel LODESTONE_TRACKER_INDICATOR = partial("lodestone_tracker_overlay");
     //Reaction wheel
     public static final PartialModel REACTION_WHEEL_CORE = partial("reaction_wheel_core");
     //Stirling engine
