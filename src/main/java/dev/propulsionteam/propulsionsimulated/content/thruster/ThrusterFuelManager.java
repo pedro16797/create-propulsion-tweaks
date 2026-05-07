@@ -76,6 +76,9 @@ public class ThrusterFuelManager extends SimpleJsonResourceReloadListener {
         if (fluidId != null && removedFuelIds.contains(fluidId)) {
             return null;
         }
+        if (fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) {
+            return FluidThrusterProperties.DEFAULT;
+        }
         FluidThrusterProperties props = scriptedFuelPropertiesMap.get(fluid);
         if (props != null) {
             return props;

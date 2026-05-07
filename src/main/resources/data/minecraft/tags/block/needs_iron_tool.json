@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "createpropulsion:thruster",
+    "createpropulsion:solid_burner",
+    "createpropulsion:liquid_burner",
+    "createpropulsion:stirling_engine",
+    "createpropulsion:vector_thruster",
+    "createpropulsion:creative_vector_thruster",
+    "createpropulsion:platinum_ore",
+    "createpropulsion:deepslate_platinum_ore",
+    "createpropulsion:platinum_block",
+    "createpropulsion:raw_platinum_block",
+    "createpropulsion:coral_generator"
+  ]
+}

@@ -17,6 +17,19 @@ public class PropulsionItems {
     
     public static final DeferredHolder<Item, Item> TURPENTINE_BUCKET =
         ITEMS.register("turpentine_bucket", () -> new net.minecraft.world.item.BucketItem(PropulsionFluids.TURPENTINE.get(), new Item.Properties().craftRemainder(net.minecraft.world.item.Items.BUCKET).stacksTo(1)));
+    public static final DeferredHolder<Item, Item> CORAL_BUCKET =
+        ITEMS.register("coral_bucket", () -> new net.minecraft.world.item.BucketItem(PropulsionFluids.CORAL.get(), new Item.Properties().craftRemainder(net.minecraft.world.item.Items.BUCKET).stacksTo(1)));
+    public static final DeferredHolder<Item, Item> PLATINUM_INGOT =
+        ITEMS.register("platinum_ingot", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> PLATINUM_NUGGET =
+        ITEMS.register("platinum_nugget", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> PLATINUM_SHEET =
+        ITEMS.register("platinum_sheet", () -> new Item(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> RAW_PLATINUM =
+        ITEMS.register("raw_platinum", () -> new Item(new Item.Properties()));
+    // public static final DeferredHolder<Item, CableSpoolItem> CABLE_SPOOL =
+    //     ITEMS.register("cable_spool", () -> new CableSpoolItem(new Item.Properties().stacksTo(1)));
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

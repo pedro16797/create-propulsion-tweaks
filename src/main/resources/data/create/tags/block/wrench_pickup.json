@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "createpropulsion:thruster",
+    "createpropulsion:creative_thruster",
+    "createpropulsion:ion_thruster",
+    "createpropulsion:vector_thruster",
+    "createpropulsion:creative_vector_thruster",
+    "createpropulsion:redstone_converter",
+    "createpropulsion:redstone_transmission",
+    "createpropulsion:solid_burner",
+    "createpropulsion:liquid_burner",
+    "createpropulsion:stirling_engine",
+    "createpropulsion:tilt_adapter",
+    "createpropulsion:wing",
+    "createpropulsion:tempered_wing",
+    "createpropulsion:copycat_wing",
+    "createpropulsion:copycat_wing_8",
+    "createpropulsion:copycat_wing_12",
+    "createpropulsion:coral_generator",
+    "createpropulsion:cable",
+    "createpropulsion:cable_hub"
+  ]
+}

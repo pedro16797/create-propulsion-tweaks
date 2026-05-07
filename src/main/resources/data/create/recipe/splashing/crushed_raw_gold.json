@@ -13,6 +13,10 @@
     {
       "chance": 0.5,
       "id": "minecraft:quartz"
+    },
+    {
+      "chance": 0.05,
+      "id": "createpropulsion:platinum_nugget"
     }
   ]
 }

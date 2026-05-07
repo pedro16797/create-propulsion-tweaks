@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "SIS",
-    " G "
+    "PIP",
+    "NGN"
   ],
   "key": {
-    "S": { "item": "create:sturdy_sheet" },
+    "P": { "item": "createpropulsion:platinum_sheet" },
     "I": { "item": "createpropulsion:ion_thruster" },
+    "N": { "item": "createpropulsion:platinum_nugget" },
     "G": { "item": "simulated:gimbal_sensor" }
   },
   "result": {

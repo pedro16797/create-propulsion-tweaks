@@ -20,6 +20,7 @@ public final class TooltipHandler {
     static {
         TOP_PROVIDERS.add(new GenericSummaryTooltipProvider());
         TOP_PROVIDERS.add(new FuelTooltipProvider());
+        TOP_PROVIDERS.add(new CoralFuelTooltipProvider());
     }
 
     private TooltipHandler() {

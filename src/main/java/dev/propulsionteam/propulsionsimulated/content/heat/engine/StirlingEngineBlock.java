@@ -91,20 +91,6 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof StirlingEngineBlockEntity engine) {
-                StirlingEngineBlockEntity controller = engine.isController() ? engine : engine.getControllerBE();
-                if (controller != null) {
-                    controller.disassembleMulti();
-                }
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
     public Class<StirlingEngineBlockEntity> getBlockEntityClass() {
         return StirlingEngineBlockEntity.class;
     }

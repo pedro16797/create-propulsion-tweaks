@@ -43,7 +43,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public static final float BASE_FUEL_CONSUMPTION = 2;
     public static final int BASE_MAX_THRUST = 600000;
     public static final int BASE_CAPACITY = 200;
-    public static final int MAX_WIDTH = 4;
+    public static final int MAX_WIDTH = 3;
 
     public SmartFluidTankBehaviour tank;
 
@@ -484,14 +484,12 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private static float getMultiblockFuelEfficiency(int cubeWidth) {
         if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_FUEL_EFFICIENCY.get().floatValue();
         if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_FUEL_EFFICIENCY.get().floatValue();
-        if (cubeWidth == 4) return PropulsionConfig.MULTIBLOCK_4X_FUEL_EFFICIENCY.get().floatValue();
         return 1.0f;
     }
 
     private static float getMultiblockThrustMultiplier(int cubeWidth) {
         if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_THRUST_MULTIPLIER.get().floatValue();
         if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_THRUST_MULTIPLIER.get().floatValue();
-        if (cubeWidth == 4) return PropulsionConfig.MULTIBLOCK_4X_THRUST_MULTIPLIER.get().floatValue();
         return 1.0f;
     }
 
