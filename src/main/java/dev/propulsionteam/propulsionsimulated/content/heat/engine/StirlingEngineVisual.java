@@ -94,7 +94,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         float renderTime = AnimationTickHolder.getRenderTime(blockEntity.getLevel());
         float engineSpeed = blockEntity.getSpeed();
         float angle = (renderTime * engineSpeed * 3f / 10f) % 360;
-        angle += rotationOffset(blockState, facing.getAxis(), pos);
+        angle += rotationOffset(blockState, facing.getAxis(), blockEntity.getBlockPos());
 
         ms.translate(0.5, 0.5, 0.5);
         ms.mulPose(facing.getRotation());

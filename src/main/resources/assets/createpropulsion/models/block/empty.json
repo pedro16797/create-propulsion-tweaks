@@ -1,0 +1,9 @@
+{
+	"loader": "forge:separate_transforms",
+	"base": {
+		"textures": {
+			"particle": "minecraft:block/air"
+		},
+		"elements": []
+	}
+}

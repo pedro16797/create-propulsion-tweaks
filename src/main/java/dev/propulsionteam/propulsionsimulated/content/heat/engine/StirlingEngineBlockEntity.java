@@ -9,6 +9,7 @@ import dev.propulsionteam.propulsionsimulated.content.heat.IHeatConsumer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
 import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
+import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -179,8 +180,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
                 BlockPos pos = origin.offset(x, 1, z);
+                BlockState state = level.getBlockState(pos);
                 if (x == 1 && z == 1) { // Center: large cogwheel
                     if (!isBlock(pos, "create:large_cogwheel")) return false;
+                    if (!state.hasProperty(RotatedPillarKineticBlock.AXIS) || state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
                 } else if ((x == 0 || x == 2) && (z == 0 || z == 2)) { // Corners: andesite alloy
                     if (!isBlock(pos, "create:andesite_alloy_block")) return false;
                 } else { // Sides
@@ -193,6 +196,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
                     if (isFrontBack) { // Front/Back: shafts
                         if (!isBlock(pos, "create:shaft")) return false;
+                        if (!state.hasProperty(RotatedPillarKineticBlock.AXIS) || state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
                     } else { // Sides: sturdy blocks
                         if (!isBlock(pos, "create:railway_casing")) return false;
                     }
