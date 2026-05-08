@@ -43,7 +43,7 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     public static final float BASE_FUEL_CONSUMPTION = 2;
     public static final int BASE_MAX_THRUST = 600000;
     public static final int BASE_CAPACITY = 200;
-    public static final int MAX_WIDTH = 3;
+    public static final int MAX_WIDTH = 4;
 
     public SmartFluidTankBehaviour tank;
 
@@ -484,12 +484,14 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
     private static float getMultiblockFuelEfficiency(int cubeWidth) {
         if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_FUEL_EFFICIENCY.get().floatValue();
         if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_FUEL_EFFICIENCY.get().floatValue();
+        if (cubeWidth == 4) return PropulsionConfig.MULTIBLOCK_4X_FUEL_EFFICIENCY.get().floatValue();
         return 1.0f;
     }
 
     private static float getMultiblockThrustMultiplier(int cubeWidth) {
         if (cubeWidth == 2) return PropulsionConfig.MULTIBLOCK_2X_THRUST_MULTIPLIER.get().floatValue();
         if (cubeWidth == 3) return PropulsionConfig.MULTIBLOCK_3X_THRUST_MULTIPLIER.get().floatValue();
+        if (cubeWidth == 4) return PropulsionConfig.MULTIBLOCK_4X_THRUST_MULTIPLIER.get().floatValue();
         return 1.0f;
     }
 
@@ -593,16 +595,24 @@ public class ThrusterBlockEntity extends AbstractThrusterBlockEntity {
         if (particleCountMultiplier <= 0) return;
         double particleVelocityMultiplier = org.joml.Math.clamp(0.0d, PARTICLE_MULTIPLIER_CAP, getParticleVelocityMultiplier());
 
-        float velocityScale = width == 2 ? 1.15f : 1.3f;
+        float velocityScale = 1.0f;
+        if (width == 2) velocityScale = 1.15f;
+        else if (width == 3) velocityScale = 1.3f;
+        else if (width == 4) velocityScale = 2.6f; // Reaches twice as far as 3x3 (approx)
+
         Vector3d particleVelocity = new Vector3d(worldExhaustDirection.x, worldExhaustDirection.y, worldExhaustDirection.z)
             .mul(4.0f * emissionScale * velocityScale * particleVelocityMultiplier);
         ParticleOptions particleData = createParticleOptions();
 
         double speedPerTick = particleVelocity.length();
         int streamParticles = Math.max(1, (int) Math.ceil(speedPerTick / TARGET_PARTICLE_SPACING_BLOCKS * particleCountMultiplier));
-        int crossSectionParticles = Math.max(1, (int) Math.round((width == 2 ? 14 : 28) * particleCountMultiplier));
+        int baseCross = width == 2 ? 14 : (width == 3 ? 28 : 56);
+        int crossSectionParticles = Math.max(1, (int) Math.round(baseCross * particleCountMultiplier));
         int particlesToSpawn = Math.max(streamParticles, crossSectionParticles);
-        double plumeRadius = width == 2 ? 0.45 : 0.7;
+        double plumeRadius = 0.35;
+        if (width == 2) plumeRadius = 0.45;
+        else if (width == 3) plumeRadius = 0.7;
+        else if (width == 4) plumeRadius = 1.2;
         for (int i = 0; i < particlesToSpawn; i++) {
             double ox = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;
             double oy = (level.random.nextDouble() * 2.0 - 1.0) * plumeRadius;

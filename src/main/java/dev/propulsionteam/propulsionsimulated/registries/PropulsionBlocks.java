@@ -3,11 +3,7 @@ package dev.propulsionteam.propulsionsimulated.registries;
 import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlock;
-import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlock;
-import dev.propulsionteam.propulsionsimulated.content.cable.hub.CableHubBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlock;
-import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlock;
-import dev.propulsionteam.propulsionsimulated.content.redstone_converter.RedstoneConverterBlock;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlock;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlock;
@@ -47,9 +43,6 @@ public class PropulsionBlocks {
     public static final DeferredBlock<CreativeVectorThrusterBlock> CREATIVE_VECTOR_THRUSTER_BLOCK = BLOCKS.register("creative_vector_thruster",
         () -> new CreativeVectorThrusterBlock(Block.Properties.of().mapColor(MapColor.METAL)
             .sound(SoundType.METAL).strength(5.5f, 4.0f).noOcclusion()));
-    public static final DeferredBlock<RedstoneConverterBlock> REDSTONE_CONVERTER_BLOCK = BLOCKS.register("redstone_converter",
-        () -> new RedstoneConverterBlock(Block.Properties.of().mapColor(MapColor.METAL)
-            .sound(SoundType.METAL).instabreak()));
     public static final DeferredBlock<RedstoneTransmissionBlock> REDSTONE_TRANSMISSION_BLOCK = BLOCKS.register("redstone_transmission",
         () -> new RedstoneTransmissionBlock(Block.Properties.of().mapColor(MapColor.PODZOL)
             .sound(SoundType.METAL).strength(2.5f, 2.0f).noOcclusion()));
@@ -78,35 +71,12 @@ public class PropulsionBlocks {
         () -> new CopycatWingBlock(Block.Properties.of().strength(1.5f, 2.0f), 8));
     public static final DeferredBlock<CopycatWingBlock> COPYCAT_WING_12 = BLOCKS.register("copycat_wing_12",
         () -> new CopycatWingBlock(Block.Properties.of().strength(1.5f, 2.0f), 12));
-    public static final DeferredBlock<Block> PLATINUM_ORE = BLOCKS.register("platinum_ore",
-        () -> new Block(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
-            .requiresCorrectToolForDrops().strength(3.0f, 3.0f)));
-    public static final DeferredBlock<Block> DEEPSLATE_PLATINUM_ORE = BLOCKS.register("deepslate_platinum_ore",
-        () -> new Block(Block.Properties.of().mapColor(MapColor.DEEPSLATE).sound(SoundType.DEEPSLATE)
-            .requiresCorrectToolForDrops().strength(4.5f, 3.0f)));
-    public static final DeferredBlock<Block> PLATINUM_BLOCK = BLOCKS.register("platinum_block",
-        () -> new Block(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
-            .requiresCorrectToolForDrops().strength(5.0f, 6.0f)));
-    public static final DeferredBlock<Block> RAW_PLATINUM_BLOCK = BLOCKS.register("raw_platinum_block",
-        () -> new Block(Block.Properties.of().mapColor(MapColor.RAW_IRON).sound(SoundType.STONE)
-            .requiresCorrectToolForDrops().strength(5.0f, 6.0f)));
-    public static final DeferredBlock<CoralGeneratorBlock> CORAL_GENERATOR = BLOCKS.register("coral_generator",
-        () -> new CoralGeneratorBlock(Block.Properties.of().mapColor(MapColor.COLOR_CYAN).sound(SoundType.STONE)
-            .requiresCorrectToolForDrops().strength(3.5f, 3.0f).noOcclusion()));
-    public static final DeferredBlock<FeCableBlock> FE_CABLE = BLOCKS.register("cable",
-        () -> new FeCableBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
-            .requiresCorrectToolForDrops().strength(1.75f, 2.0f).noOcclusion()));
-    public static final DeferredBlock<CableHubBlock> CABLE_HUB = BLOCKS.register("cable_hub",
-        () -> new CableHubBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
-            .requiresCorrectToolForDrops().strength(2.5f, 3.5f).noOcclusion()));
-
     static {
         registerDefaultBlockItem("thruster", THRUSTER_BLOCK);
         registerBlockItem("creative_thruster", CREATIVE_THRUSTER_BLOCK, new BlockItem.Properties().rarity(Rarity.EPIC));
         registerBlockItem("ion_thruster", ION_THRUSTER_BLOCK, new BlockItem.Properties().rarity(Rarity.UNCOMMON));
         registerBlockItem("vector_thruster", VECTOR_THRUSTER_BLOCK, new BlockItem.Properties().rarity(Rarity.UNCOMMON));
         registerBlockItem("creative_vector_thruster", CREATIVE_VECTOR_THRUSTER_BLOCK, new BlockItem.Properties().rarity(Rarity.EPIC));
-        registerDefaultBlockItem("redstone_converter", REDSTONE_CONVERTER_BLOCK);
         registerDefaultBlockItem("redstone_transmission", REDSTONE_TRANSMISSION_BLOCK);
         registerDefaultBlockItem("solid_burner", SOLID_BURNER);
         registerDefaultBlockItem("liquid_burner", LIQUID_BURNER);
@@ -117,13 +87,6 @@ public class PropulsionBlocks {
         BLOCK_ITEMS.register("copycat_wing", () -> new CopycatWingItem(COPYCAT_WING.get(), new BlockItem.Properties()));
         BLOCK_ITEMS.register("copycat_wing_8", () -> new CopycatWingItem(COPYCAT_WING_8.get(), new BlockItem.Properties()));
         BLOCK_ITEMS.register("copycat_wing_12", () -> new CopycatWingItem(COPYCAT_WING_12.get(), new BlockItem.Properties()));
-        registerDefaultBlockItem("platinum_ore", PLATINUM_ORE);
-        registerDefaultBlockItem("deepslate_platinum_ore", DEEPSLATE_PLATINUM_ORE);
-        registerDefaultBlockItem("platinum_block", PLATINUM_BLOCK);
-        registerDefaultBlockItem("raw_platinum_block", RAW_PLATINUM_BLOCK);
-        registerBlockItem("coral_generator", CORAL_GENERATOR, new BlockItem.Properties().rarity(Rarity.RARE));
-        registerDefaultBlockItem("cable", FE_CABLE);
-        registerDefaultBlockItem("cable_hub", CABLE_HUB);
 
         PropulsionDefaultStress.setImpact(ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "redstone_transmission"), 0, false);
         PropulsionDefaultStress.setImpact(ResourceLocation.fromNamespaceAndPath(CreatePropulsion.ID, "tilt_adapter"), 0, false);

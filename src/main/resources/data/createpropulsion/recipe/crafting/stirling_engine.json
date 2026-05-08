@@ -1,13 +1,16 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        "CSC",
+        "ISI",
         "AGA",
         "CCC"
     ],
     "key": {
         "C": {
             "item": "create:copper_sheet"
+        },
+        "I": {
+            "item": "create:sturdy_sheet"
         },
         "G": {
             "item": "create:cogwheel"

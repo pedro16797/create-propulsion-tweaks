@@ -8,6 +8,7 @@ import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.createmod.ponder.api.scene.Selection;
 import dev.propulsionteam.propulsionsimulated.content.thruster.ThrusterParticleType;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionItems;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -60,7 +61,7 @@ public class ThrusterScenes {
 
         scene.overlay().showControls(util.vector().centerOf(util.grid().at(0, 1, 2)), Pointing.RIGHT, 50)
             .rightClick()
-            .withItem(new ItemStack(Items.LAVA_BUCKET));
+            .withItem(new ItemStack(PropulsionItems.TURPENTINE_BUCKET.get()));
         scene.overlay().showText(80)
             .colored(PonderPalette.GREEN)
             .sharedText("thruster_normal.valid_fuels")
@@ -69,13 +70,13 @@ public class ThrusterScenes {
         scene.idle(70);
 
         scene.world().modifyBlockEntityNBT(thruster, ThrusterBlockEntity.class, nbt -> {
-            CompoundTag lava = new CompoundTag();
-            lava.putString("FluidName", "minecraft:lava");
-            lava.putString("Fluid", "minecraft:lava");
-            lava.putString("id", "minecraft:lava");
-            lava.putInt("Amount", 200);
-            nbt.put("TankContent", lava);
-            nbt.put("Tank", lava.copy());
+            CompoundTag fuel = new CompoundTag();
+            fuel.putString("FluidName", "createpropulsion:turpentine");
+            fuel.putString("Fluid", "createpropulsion:turpentine");
+            fuel.putString("id", "createpropulsion:turpentine");
+            fuel.putInt("Amount", 200);
+            nbt.put("TankContent", fuel);
+            nbt.put("Tank", fuel.copy());
             nbt.putInt("RedstoneInput", 15);
         });
         scene.effects().indicateRedstone(util.grid().at(3, 1, 1));
@@ -143,7 +144,7 @@ public class ThrusterScenes {
             .placeNearTarget();
         scene.overlay().showControls(util.vector().centerOf(util.grid().at(0, 4, 2)), Pointing.RIGHT, 45)
             .rightClick()
-            .withItem(new ItemStack(Items.LAVA_BUCKET));
+            .withItem(new ItemStack(PropulsionItems.TURPENTINE_BUCKET.get()));
         scene.idle(70);
         scene.world().hideSection(rearInputNoClutch.add(topPowerTrain), Direction.UP);
         scene.idle(40);
@@ -155,7 +156,7 @@ public class ThrusterScenes {
 
         scene.overlay().showControls(util.vector().centerOf(util.grid().at(0, 1, 3)), Pointing.RIGHT, 45)
             .rightClick()
-            .withItem(new ItemStack(Items.LAVA_BUCKET));
+            .withItem(new ItemStack(PropulsionItems.TURPENTINE_BUCKET.get()));
         scene.overlay().showText(80)
             .sharedText("thruster_2x2.valid_fuel_now")
             .pointAt(util.vector().centerOf(util.grid().at(1, 1, 3)))
@@ -163,13 +164,13 @@ public class ThrusterScenes {
         scene.idle(90);
 
         scene.world().modifyBlockEntityNBT(thrusterCube, ThrusterBlockEntity.class, nbt -> {
-            CompoundTag lava = new CompoundTag();
-            lava.putString("FluidName", "minecraft:lava");
-            lava.putString("Fluid", "minecraft:lava");
-            lava.putString("id", "minecraft:lava");
-            lava.putInt("Amount", 1200);
-            nbt.put("TankContent", lava);
-            nbt.put("Tank", lava.copy());
+            CompoundTag fuel = new CompoundTag();
+            fuel.putString("FluidName", "createpropulsion:turpentine");
+            fuel.putString("Fluid", "createpropulsion:turpentine");
+            fuel.putString("id", "createpropulsion:turpentine");
+            fuel.putInt("Amount", 1200);
+            nbt.put("TankContent", fuel);
+            nbt.put("Tank", fuel.copy());
             nbt.putInt("RedstoneInput", 15);
         });
         scene.effects().indicateRedstone(util.grid().at(3, 1, 2));
@@ -229,7 +230,7 @@ public class ThrusterScenes {
             .placeNearTarget();
         scene.overlay().showControls(util.vector().centerOf(util.grid().at(0, 5, 2)), Pointing.RIGHT, 45)
             .rightClick()
-            .withItem(new ItemStack(Items.LAVA_BUCKET));
+            .withItem(new ItemStack(PropulsionItems.TURPENTINE_BUCKET.get()));
         scene.idle(90);
 
         scene.world().hideSection(topLine.add(topPowerTrain), Direction.UP);
@@ -250,7 +251,7 @@ public class ThrusterScenes {
 
         scene.overlay().showControls(util.vector().centerOf(util.grid().at(0, 1, 3)), Pointing.RIGHT, 45)
             .rightClick()
-            .withItem(new ItemStack(Items.LAVA_BUCKET));
+            .withItem(new ItemStack(PropulsionItems.TURPENTINE_BUCKET.get()));
         scene.overlay().showText(80)
             .sharedText("thruster_3x3.valid_fuel_now")
             .pointAt(util.vector().centerOf(util.grid().at(1, 1, 2)))
@@ -258,13 +259,13 @@ public class ThrusterScenes {
         scene.idle(90);
 
         scene.world().modifyBlockEntityNBT(thrusterCube, ThrusterBlockEntity.class, nbt -> {
-            CompoundTag lava = new CompoundTag();
-            lava.putString("FluidName", "minecraft:lava");
-            lava.putString("Fluid", "minecraft:lava");
-            lava.putString("id", "minecraft:lava");
-            lava.putInt("Amount", 2000);
-            nbt.put("TankContent", lava);
-            nbt.put("Tank", lava.copy());
+            CompoundTag fuel = new CompoundTag();
+            fuel.putString("FluidName", "createpropulsion:turpentine");
+            fuel.putString("Fluid", "createpropulsion:turpentine");
+            fuel.putString("id", "createpropulsion:turpentine");
+            fuel.putInt("Amount", 2000);
+            nbt.put("TankContent", fuel);
+            nbt.put("Tank", fuel.copy());
             nbt.putInt("RedstoneInput", 15);
         });
         scene.effects().indicateRedstone(util.grid().at(3, 1, 1));

@@ -2,14 +2,10 @@ package dev.propulsionteam.propulsionsimulated.registries;
 
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.cable.fe.FeCableBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.cable.hub.CableHubBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.platinum.CoralGeneratorBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
-import dev.propulsionteam.propulsionsimulated.content.redstone_converter.RedstoneConverterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.thruster.ThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.IonThrusterBlockEntity;
@@ -47,11 +43,6 @@ public class PropulsionBlockEntities {
                 return new IonThrusterBlockEntity(pos, state);
             }, PropulsionBlocks.ION_THRUSTER_BLOCK.get(), PropulsionBlocks.VECTOR_THRUSTER_BLOCK.get()).build(null));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneConverterBlockEntity>> REDSTONE_CONVERTER_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("redstone_converter_block_entity",
-            () -> BlockEntityType.Builder.of((pos, state) -> new RedstoneConverterBlockEntity(pos, state),
-                PropulsionBlocks.REDSTONE_CONVERTER_BLOCK.get()).build(null));
-
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneTransmissionBlockEntity>> REDSTONE_TRANSMISSION_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("redstone_transmission_block_entity",
             () -> BlockEntityType.Builder.of((pos, state) -> new RedstoneTransmissionBlockEntity(pos, state), PropulsionBlocks.REDSTONE_TRANSMISSION_BLOCK.get()).build(null));
@@ -80,16 +71,6 @@ public class PropulsionBlockEntities {
                 PropulsionBlocks.COPYCAT_WING_8.get(),
                 PropulsionBlocks.COPYCAT_WING_12.get()
             ).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoralGeneratorBlockEntity>> CORAL_GENERATOR_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("coral_generator_block_entity",
-            () -> BlockEntityType.Builder.of((pos, state) -> new CoralGeneratorBlockEntity(pos, state), PropulsionBlocks.CORAL_GENERATOR.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeCableBlockEntity>> FE_CABLE_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("fe_cable_block_entity",
-            () -> BlockEntityType.Builder.of((pos, state) -> new FeCableBlockEntity(pos, state), PropulsionBlocks.FE_CABLE.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableHubBlockEntity>> CABLE_HUB_BLOCK_ENTITY =
-        BLOCK_ENTITY_TYPES.register("cable_hub_block_entity",
-            () -> BlockEntityType.Builder.of((pos, state) -> new CableHubBlockEntity(pos, state), PropulsionBlocks.CABLE_HUB.get()).build(null));
-
     public static void register(IEventBus modBus) {
         BLOCK_ENTITY_TYPES.register(modBus);
     }
