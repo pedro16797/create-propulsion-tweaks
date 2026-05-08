@@ -44,7 +44,7 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         if (blockEntity.isMultiblock && blockEntity.structureOrigin != null) {
             BlockPos offset = blockEntity.structureOrigin.subtract(blockEntity.getBlockPos());
             ms.translate(offset.getX(), offset.getY(), offset.getZ());
-            ms.scale(3.001f, 3.001f, 3.001f);
+            ms.scale(3, 3, 3);
             CachedBuffers.block(state.setValue(StirlingEngineBlock.MULTIBLOCK, false))
                 .light(light)
                 .renderInto(ms, bufferSource.getBuffer(RenderType.solid()));

@@ -83,7 +83,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
         Vector4f normalizedExtensions = StirlingEngineRenderer.calculateExtensions(timeSeconds, crankRadius, conrodLength, effectiveRevolutionPeriod);
 
-        float scale = blockEntity.isMultiblock ? 3.001f : 1.0f;
+        float scale = blockEntity.isMultiblock ? 3.0f : 1.0f;
         BlockPos originOffset = blockEntity.isMultiblock && blockEntity.structureOrigin != null ? blockEntity.structureOrigin.subtract(blockEntity.getBlockPos()) : BlockPos.ZERO;
 
         // Animate shaft

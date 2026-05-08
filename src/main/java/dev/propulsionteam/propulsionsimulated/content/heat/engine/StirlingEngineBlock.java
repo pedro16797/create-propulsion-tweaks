@@ -101,6 +101,7 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof StirlingEngineBlockEntity engine) {
             engine.setPowered(level.hasNeighborSignal(pos));
+            engine.updateConnectivity = true;
         }
     }
 
@@ -109,7 +110,7 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
         if (!state.is(newState.getBlock())) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof StirlingEngineBlockEntity engine) {
-                StirlingEngineBlockEntity controller = engine.isController() ? engine : engine.getControllerBE();
+                StirlingEngineBlockEntity controller = engine.getControllerBE();
                 if (controller != null) {
                     controller.disassembleMulti();
                 }

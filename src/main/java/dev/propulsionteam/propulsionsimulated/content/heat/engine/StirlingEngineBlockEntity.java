@@ -7,6 +7,7 @@ import dev.propulsionteam.propulsionsimulated.compat.PropulsionCompatibility;
 import dev.propulsionteam.propulsionsimulated.compat.computercraft.ComputerBehaviour;
 import dev.propulsionteam.propulsionsimulated.content.heat.IHeatConsumer;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlockEntities;
+import dev.propulsionteam.propulsionsimulated.registries.PropulsionBlocks;
 import com.simibubi.create.compat.computercraft.AbstractComputerBehaviour;
 import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
@@ -20,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,7 +38,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     protected BlockPos controllerPos;
     protected BlockPos structureOrigin;
     protected boolean isMultiblock = false;
-    protected boolean isSuperheated = false;
+    protected int heatSourceCount = 0;
+    protected int superheatedCount = 0;
+    protected BlockState originalState;
+    protected CompoundTag originalNbt;
     protected boolean updateConnectivity = true;
 
     private int activeTicks = 0;
@@ -117,9 +122,14 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         }
 
         if (isController() && isMultiblock) {
-            if (structureOrigin == null || !isValid3x3x3(structureOrigin)) {
-                disassembleMulti();
+            if (level.getGameTime() % 20 == 0) {
+                if (structureOrigin == null || !isValid3x3x3(structureOrigin)) {
+                    disassembleMulti();
+                }
             }
+            if (isMultiblock) tickBlazeBurnerHeat();
+        } else if (!isMultiblock) {
+            tickBlazeBurnerHeat();
         }
 
         boolean currentlyActive = isEngineActive();
@@ -150,14 +160,9 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     protected void tryAssemble3x3x3() {
-        for (int dx = -2; dx <= 0; dx++) {
-            for (int dz = -2; dz <= 0; dz++) {
-                BlockPos origin = worldPosition.offset(dx, -2, dz);
-                if (isValid3x3x3(origin)) {
-                    formMulti(origin);
-                    return;
-                }
-            }
+        BlockPos origin = worldPosition.offset(-1, -2, -1);
+        if (isValid3x3x3(origin)) {
+            formMulti(origin);
         }
     }
 
@@ -227,47 +232,83 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             for (int z = 0; z < 3; z++) {
                 for (int y = 0; y < 3; y++) {
                     BlockPos pos = origin.offset(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
-                        level.setBlock(pos, state.setValue(StirlingEngineBlock.MULTIBLOCK, true), 3);
+                    BlockState oldState = level.getBlockState(pos);
+                    CompoundTag oldNbt = null;
+                    BlockEntity oldBe = level.getBlockEntity(pos);
+                    if (oldBe != null) {
+                        oldNbt = oldBe.saveWithFullMetadata(level.registryAccess());
                     }
+
+                    if (!pos.equals(worldPosition)) {
+                        level.setBlock(pos, PropulsionBlocks.STIRLING_ENGINE_BLOCK.get().defaultBlockState()
+                            .setValue(StirlingEngineBlock.HORIZONTAL_FACING, getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING))
+                            .setValue(StirlingEngineBlock.MULTIBLOCK, true), 3);
+                    } else {
+                        level.setBlock(pos, oldState.setValue(StirlingEngineBlock.MULTIBLOCK, true), 3);
+                    }
+
                     BlockEntity be = level.getBlockEntity(pos);
                     if (be instanceof StirlingEngineBlockEntity s) {
                         s.controllerPos = worldPosition;
                         s.structureOrigin = origin;
                         s.isMultiblock = true;
+                        s.originalState = oldState;
+                        s.originalNbt = oldNbt;
                         s.setChanged();
                         s.sendData();
                     }
                 }
             }
         }
-        this.controllerPos = worldPosition;
-        this.structureOrigin = origin;
-        this.isMultiblock = true;
-        this.updateGeneratedRotation();
-        this.setChanged();
-        this.sendData();
     }
 
     public void disassembleMulti() {
         if (!isController() || !isMultiblock) return;
         BlockPos origin = structureOrigin;
         if (origin == null) return;
+
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
                 for (int y = 0; y < 3; y++) {
                     BlockPos pos = origin.offset(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
-                        level.setBlock(pos, state.setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
-                    }
                     BlockEntity be = level.getBlockEntity(pos);
+                    BlockState restoreState = null;
+                    CompoundTag restoreNbt = null;
+
+                    if (be instanceof StirlingEngineBlockEntity s) {
+                        restoreState = s.originalState;
+                        restoreNbt = s.originalNbt;
+                    }
+
+                    if (restoreState != null) {
+                        BlockState toSet = restoreState;
+                        if (toSet.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+                            toSet = toSet.setValue(StirlingEngineBlock.MULTIBLOCK, false);
+                        }
+                        level.setBlock(pos, toSet, 3);
+                        if (restoreNbt != null) {
+                            BlockEntity newBe = level.getBlockEntity(pos);
+                            if (newBe != null) {
+                                newBe.loadWithComponents(restoreNbt, level.registryAccess());
+                            }
+                        }
+                    } else {
+                        // Fallback if something went wrong
+                        BlockState currentState = level.getBlockState(pos);
+                        if (currentState.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+                            level.setBlock(pos, currentState.setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
+                        }
+                    }
+
+                    be = level.getBlockEntity(pos);
                     if (be instanceof StirlingEngineBlockEntity s) {
                         s.isMultiblock = false;
-                        s.isSuperheated = false;
+                        s.heatSourceCount = 0;
+                        s.superheatedCount = 0;
                         s.controllerPos = null;
                         s.structureOrigin = null;
+                        s.originalState = null;
+                        s.originalNbt = null;
                         s.updateConnectivity = true;
                         s.updateGeneratedRotation();
                         s.setChanged();
@@ -283,35 +324,29 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         if (!PropulsionConfig.BLAZE_BURNERS_HEAT_STIRLING_ENGINES.get()) return;
 
         boolean wasInactive = activeTicks == 0;
-        boolean previouslySuperheated = isSuperheated;
+        int prevHeat = heatSourceCount;
+        int prevSuper = superheatedCount;
 
         if (isMultiblock) {
             if (isController()) {
                 BlockPos origin = structureOrigin;
                 if (origin == null) return;
-                boolean allHeated = true;
-                boolean allSuperheated = true;
+                heatSourceCount = 0;
+                superheatedCount = 0;
                 for (int x = 0; x < 3; x++) {
                     for (int z = 0; z < 3; z++) {
                         BlockPos belowPos = origin.offset(x, -1, z);
                         BlockState below = level.getBlockState(belowPos);
-                        if (!(below.getBlock() instanceof BlazeBurnerBlock) || !below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
-                            allHeated = false;
-                            allSuperheated = false;
-                            break;
+                        if (below.getBlock() instanceof BlazeBurnerBlock && below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
+                            HeatLevel heat = below.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+                            if (heat.isAtLeast(HeatLevel.FADING)) {
+                                heatSourceCount++;
+                                if (heat.isAtLeast(HeatLevel.SEETHING)) superheatedCount++;
+                            }
                         }
-                        HeatLevel heat = below.getValue(BlazeBurnerBlock.HEAT_LEVEL);
-                        if (!heat.isAtLeast(HeatLevel.FADING)) allHeated = false;
-                        if (!heat.isAtLeast(HeatLevel.SEETHING)) allSuperheated = false;
                     }
-                    if (!allHeated) break;
                 }
-                if (allHeated) {
-                    activeTicks = 3;
-                    isSuperheated = allSuperheated;
-                } else {
-                    isSuperheated = false;
-                }
+                if (heatSourceCount > 0) activeTicks = 3;
             }
         } else {
             BlockState below = level.getBlockState(worldPosition.below());
@@ -319,16 +354,19 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
                 HeatLevel heat = below.getValue(BlazeBurnerBlock.HEAT_LEVEL);
                 if (heat.isAtLeast(HeatLevel.FADING)) {
                     activeTicks = 3;
-                    isSuperheated = heat.isAtLeast(HeatLevel.SEETHING);
+                    heatSourceCount = 1;
+                    superheatedCount = heat.isAtLeast(HeatLevel.SEETHING) ? 1 : 0;
                 } else {
-                    isSuperheated = false;
+                    heatSourceCount = 0;
+                    superheatedCount = 0;
                 }
             } else {
-                isSuperheated = false;
+                heatSourceCount = 0;
+                superheatedCount = 0;
             }
         }
 
-        if ((wasInactive && activeTicks > 0) || (previouslySuperheated != isSuperheated)) {
+        if ((wasInactive && activeTicks > 0) || (prevHeat != heatSourceCount) || (prevSuper != superheatedCount)) {
             updateGeneratedRotation();
             sendData();
         }
@@ -385,14 +423,14 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         if (rpm == 0) return 0f; 
 
         float stressFactor = MAX_GENERATED_RPM / rpm;
-        float baseCapacity = PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
-        float capacity = stressFactor * baseCapacity;
 
+        float capacity;
         if (isMultiblock) {
-            capacity *= 16f;
-        }
-        if (isSuperheated) {
-            capacity *= 2f;
+            capacity = (heatSourceCount * 64f + superheatedCount * 64f) * stressFactor;
+        } else {
+            float baseCapacity = PropulsionConfig.STIRLING_GENERATED_SU.get().floatValue();
+            capacity = stressFactor * baseCapacity;
+            if (superheatedCount > 0) capacity *= 2f;
         }
 
         this.lastCapacityProvided = capacity;
@@ -442,12 +480,19 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         compound.putBoolean("isPowered", isPowered);
         compound.putBoolean("computerActive", computerActive);
         compound.putBoolean("isMultiblock", isMultiblock);
-        compound.putBoolean("isSuperheated", isSuperheated);
+        compound.putInt("heatSourceCount", heatSourceCount);
+        compound.putInt("superheatedCount", superheatedCount);
         if (controllerPos != null) {
             compound.putLong("controllerPos", controllerPos.asLong());
         }
         if (structureOrigin != null) {
             compound.putLong("structureOrigin", structureOrigin.asLong());
+        }
+        if (originalState != null) {
+            compound.put("originalState", NbtUtils.writeBlockState(originalState));
+        }
+        if (originalNbt != null) {
+            compound.put("originalNbt", originalNbt);
         }
     }
 
@@ -462,7 +507,8 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             computerActive = true;
         }
         isMultiblock = compound.getBoolean("isMultiblock");
-        isSuperheated = compound.getBoolean("isSuperheated");
+        heatSourceCount = compound.getInt("heatSourceCount");
+        superheatedCount = compound.getInt("superheatedCount");
         if (compound.contains("controllerPos")) {
             controllerPos = BlockPos.of(compound.getLong("controllerPos"));
         } else {
@@ -472,6 +518,12 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             structureOrigin = BlockPos.of(compound.getLong("structureOrigin"));
         } else {
             structureOrigin = null;
+        }
+        if (compound.contains("originalState")) {
+            originalState = NbtUtils.readBlockState(level != null ? level.holderLookup(net.minecraft.core.registries.Registries.BLOCK) : registries.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK), compound.getCompound("originalState"));
+        }
+        if (compound.contains("originalNbt")) {
+            originalNbt = compound.getCompound("originalNbt");
         }
     }
 }
