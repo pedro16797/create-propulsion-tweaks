@@ -18,6 +18,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,9 +34,21 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
     public void renderSafe(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay) {
         if (VisualizationManager.supportsVisualization(blockEntity.getLevel())) return;
 
+        if (blockEntity.isMultiblock && !blockEntity.isController()) return;
+
         Direction direction = blockEntity.getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING);
         BlockState state = blockEntity.getBlockState();
         Level level = blockEntity.getLevel();
+
+        ms.pushPose();
+        if (blockEntity.isMultiblock && blockEntity.structureOrigin != null) {
+            BlockPos offset = blockEntity.structureOrigin.subtract(blockEntity.getBlockPos());
+            ms.translate(offset.getX(), offset.getY(), offset.getZ());
+            ms.scale(3.001f, 3.001f, 3.001f);
+            CachedBuffers.block(state.setValue(StirlingEngineBlock.MULTIBLOCK, false))
+                .light(light)
+                .renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+        }
         
         // Render shaft on the back side
         float time = AnimationTickHolder.getRenderTime(level);
@@ -50,6 +63,7 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
 
         float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
         renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+        ms.popPose();
     }
 
     private void renderPistons(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {

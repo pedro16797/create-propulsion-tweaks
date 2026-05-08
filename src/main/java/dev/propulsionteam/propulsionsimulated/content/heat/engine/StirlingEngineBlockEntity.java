@@ -17,6 +17,7 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -32,7 +33,9 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     protected StirlingScrollValueBehaviour targetSpeedBehaviour;
     @javax.annotation.Nullable
     protected BlockPos controllerPos;
+    protected BlockPos structureOrigin;
     protected boolean isMultiblock = false;
+    protected boolean isSuperheated = false;
     protected boolean updateConnectivity = true;
 
     private int activeTicks = 0;
@@ -108,12 +111,12 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         if (updateConnectivity) {
             updateConnectivity = false;
             if (isController() && !isMultiblock) {
-                tryAssemble();
+                tryAssemble3x3x3();
             }
         }
 
         if (isController() && isMultiblock) {
-            if (!isValidMultiblock(worldPosition)) {
+            if (structureOrigin == null || !isValid3x3x3(structureOrigin)) {
                 disassembleMulti();
             }
         }
@@ -135,77 +138,132 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     public boolean isController() {
-        return controllerPos == null;
+        return isMultiblock ? (controllerPos != null && controllerPos.equals(worldPosition)) : controllerPos == null;
     }
 
     @javax.annotation.Nullable
     public StirlingEngineBlockEntity getControllerBE() {
-        if (isController() || level == null) return this;
+        if (isController() || level == null || controllerPos == null) return this;
         BlockEntity be = level.getBlockEntity(controllerPos);
         return be instanceof StirlingEngineBlockEntity s ? s : null;
     }
 
-    protected void tryAssemble() {
-        for (int dy = -1; dy <= 0; dy++) {
-            for (int dx = -1; dx <= 0; dx++) {
-                for (int dz = -1; dz <= 0; dz++) {
-                    BlockPos origin = worldPosition.offset(dx, dy, dz);
-                    if (isValidCube(origin)) {
-                        formMulti(origin);
-                        return;
+    protected void tryAssemble3x3x3() {
+        for (int dx = -2; dx <= 0; dx++) {
+            for (int dz = -2; dz <= 0; dz++) {
+                BlockPos origin = worldPosition.offset(dx, -2, dz);
+                if (isValid3x3x3(origin)) {
+                    formMulti(origin);
+                    return;
+                }
+            }
+        }
+    }
+
+    private boolean isBlock(BlockPos pos, String id) {
+        return BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString().equals(id);
+    }
+
+    protected boolean isValid3x3x3(BlockPos origin) {
+        Direction facing = getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING);
+        Direction.Axis axis = facing.getAxis();
+
+        // Bottom layer: 3x3 copper blocks
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                if (!isBlock(origin.offset(x, 0, z), "minecraft:copper_block")) return false;
+            }
+        }
+
+        // Center layer
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                BlockPos pos = origin.offset(x, 1, z);
+                if (x == 1 && z == 1) { // Center: large cogwheel
+                    if (!isBlock(pos, "create:large_cogwheel")) return false;
+                } else if ((x == 0 || x == 2) && (z == 0 || z == 2)) { // Corners: andesite alloy
+                    if (!isBlock(pos, "create:andesite_alloy_block")) return false;
+                } else { // Sides
+                    boolean isFrontBack = false;
+                    if (axis == Direction.Axis.X) {
+                        if (z == 1) isFrontBack = true;
+                    } else {
+                        if (x == 1) isFrontBack = true;
+                    }
+
+                    if (isFrontBack) { // Front/Back: shafts
+                        if (!isBlock(pos, "create:shaft")) return false;
+                    } else { // Sides: sturdy blocks
+                        if (!isBlock(pos, "create:railway_casing")) return false;
                     }
                 }
             }
         }
-    }
 
-    protected boolean isValidCube(BlockPos origin) {
-        Direction facing = getBlockState().getValue(StirlingEngineBlock.HORIZONTAL_FACING);
-        for (int x = 0; x < 2; x++) {
-            for (int z = 0; z < 2; z++) {
-                for (int y = 0; y < 2; y++) {
-                    BlockPos pos = origin.offset(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (!(state.getBlock() instanceof StirlingEngineBlock)) return false;
+        // Top layer: 3x3 sturdy blocks
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                BlockPos pos = origin.offset(x, 2, z);
+                BlockState state = level.getBlockState(pos);
+                if (state.getBlock() instanceof StirlingEngineBlock) {
                     if (state.getValue(StirlingEngineBlock.HORIZONTAL_FACING) != facing) return false;
                     BlockEntity be = level.getBlockEntity(pos);
-                    if (!(be instanceof StirlingEngineBlockEntity s)) return false;
-                    if (s.isMultiblock) return false;
+                    if (be instanceof StirlingEngineBlockEntity s && s.isMultiblock && s.controllerPos != null && !s.controllerPos.equals(worldPosition)) return false;
+                } else {
+                    if (!isBlock(pos, "create:railway_casing")) return false;
                 }
             }
         }
+
         return true;
     }
 
     protected void formMulti(BlockPos origin) {
-        for (int x = 0; x < 2; x++) {
-            for (int z = 0; z < 2; z++) {
-                for (int y = 0; y < 2; y++) {
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                for (int y = 0; y < 3; y++) {
                     BlockPos pos = origin.offset(x, y, z);
-                    StirlingEngineBlockEntity s = (StirlingEngineBlockEntity) level.getBlockEntity(pos);
-                    s.controllerPos = origin;
-                    s.isMultiblock = true;
-                    s.setChanged();
-                    s.sendData();
+                    BlockState state = level.getBlockState(pos);
+                    if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+                        level.setBlock(pos, state.setValue(StirlingEngineBlock.MULTIBLOCK, true), 3);
+                    }
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (be instanceof StirlingEngineBlockEntity s) {
+                        s.controllerPos = worldPosition;
+                        s.structureOrigin = origin;
+                        s.isMultiblock = true;
+                        s.setChanged();
+                        s.sendData();
+                    }
                 }
             }
         }
-        StirlingEngineBlockEntity controller = (StirlingEngineBlockEntity) level.getBlockEntity(origin);
-        controller.controllerPos = null;
-        controller.updateGeneratedRotation();
+        this.controllerPos = worldPosition;
+        this.structureOrigin = origin;
+        this.isMultiblock = true;
+        this.updateGeneratedRotation();
+        this.setChanged();
+        this.sendData();
     }
 
     public void disassembleMulti() {
         if (!isController() || !isMultiblock) return;
-        BlockPos origin = worldPosition;
-        for (int x = 0; x < 2; x++) {
-            for (int z = 0; z < 2; z++) {
-                for (int y = 0; y < 2; y++) {
+        BlockPos origin = structureOrigin;
+        if (origin == null) return;
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                for (int y = 0; y < 3; y++) {
                     BlockPos pos = origin.offset(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+                    if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+                        level.setBlock(pos, state.setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
+                    }
                     BlockEntity be = level.getBlockEntity(pos);
                     if (be instanceof StirlingEngineBlockEntity s) {
                         s.isMultiblock = false;
+                        s.isSuperheated = false;
                         s.controllerPos = null;
+                        s.structureOrigin = null;
                         s.updateConnectivity = true;
                         s.updateGeneratedRotation();
                         s.setChanged();
@@ -216,60 +274,59 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         }
     }
 
-    protected boolean isValidMultiblock(BlockPos origin) {
-        for (int x = 0; x < 2; x++) {
-            for (int z = 0; z < 2; z++) {
-                for (int y = 0; y < 2; y++) {
-                    BlockPos pos = origin.offset(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (!(state.getBlock() instanceof StirlingEngineBlock)) return false;
-                    BlockEntity be = level.getBlockEntity(pos);
-                    if (!(be instanceof StirlingEngineBlockEntity s)) return false;
-                    if (s.getControllerBE() != this) return false;
-                }
-            }
-        }
-        return true;
-    }
-
     private void tickBlazeBurnerHeat() {
         if (!isEngineActive()) return;
         if (!PropulsionConfig.BLAZE_BURNERS_HEAT_STIRLING_ENGINES.get()) return;
 
+        boolean wasInactive = activeTicks == 0;
+        boolean previouslySuperheated = isSuperheated;
+
         if (isMultiblock) {
             if (isController()) {
+                BlockPos origin = structureOrigin;
+                if (origin == null) return;
+                boolean allHeated = true;
                 boolean allSuperheated = true;
-                for (int x = 0; x < 2; x++) {
-                    for (int z = 0; z < 2; z++) {
-                        BlockPos belowPos = worldPosition.offset(x, -1, z);
+                for (int x = 0; x < 3; x++) {
+                    for (int z = 0; z < 3; z++) {
+                        BlockPos belowPos = origin.offset(x, -1, z);
                         BlockState below = level.getBlockState(belowPos);
-                        if (!(below.getBlock() instanceof BlazeBurnerBlock) ||
-                            !below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL) ||
-                            !below.getValue(BlazeBurnerBlock.HEAT_LEVEL).isAtLeast(HeatLevel.SEETHING)) {
+                        if (!(below.getBlock() instanceof BlazeBurnerBlock) || !below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
+                            allHeated = false;
                             allSuperheated = false;
                             break;
                         }
+                        HeatLevel heat = below.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+                        if (!heat.isAtLeast(HeatLevel.FADING)) allHeated = false;
+                        if (!heat.isAtLeast(HeatLevel.SEETHING)) allSuperheated = false;
                     }
-                    if (!allSuperheated) break;
+                    if (!allHeated) break;
                 }
-                if (allSuperheated) {
-                    boolean wasInactive = activeTicks == 0;
+                if (allHeated) {
                     activeTicks = 3;
-                    if (wasInactive) updateGeneratedRotation();
+                    isSuperheated = allSuperheated;
+                } else {
+                    isSuperheated = false;
                 }
             }
-            return;
+        } else {
+            BlockState below = level.getBlockState(worldPosition.below());
+            if (below.getBlock() instanceof BlazeBurnerBlock && below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) {
+                HeatLevel heat = below.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+                if (heat.isAtLeast(HeatLevel.FADING)) {
+                    activeTicks = 3;
+                    isSuperheated = heat.isAtLeast(HeatLevel.SEETHING);
+                } else {
+                    isSuperheated = false;
+                }
+            } else {
+                isSuperheated = false;
+            }
         }
 
-        BlockState below = level.getBlockState(worldPosition.below());
-        if (!(below.getBlock() instanceof BlazeBurnerBlock)) return;
-        if (!below.hasProperty(BlazeBurnerBlock.HEAT_LEVEL)) return;
-        if (!below.getValue(BlazeBurnerBlock.HEAT_LEVEL).isAtLeast(HeatLevel.FADING)) return;
-
-        boolean wasInactive = activeTicks == 0;
-        activeTicks = 3;
-        if (wasInactive) {
+        if ((wasInactive && activeTicks > 0) || (previouslySuperheated != isSuperheated)) {
             updateGeneratedRotation();
+            sendData();
         }
     }
 
@@ -286,6 +343,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     @Override
     public float consumeHeat(float maxAvailable, float expectedHeatOutput, boolean simulate) {
         if (!isEngineActive()) return 0f;
+        if (isMultiblock && !isController()) {
+            StirlingEngineBlockEntity controller = getControllerBE();
+            if (controller != null) return controller.consumeHeat(maxAvailable, expectedHeatOutput, simulate);
+        }
 
         float rpm = targetSpeedBehaviour.getUnsignedRPM();
         float modeConsumptionFactor = rpm / MAX_GENERATED_RPM;
@@ -325,6 +386,9 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
         if (isMultiblock) {
             capacity *= 16f;
+        }
+        if (isSuperheated) {
+            capacity *= 2f;
         }
 
         this.lastCapacityProvided = capacity;
@@ -374,8 +438,12 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         compound.putBoolean("isPowered", isPowered);
         compound.putBoolean("computerActive", computerActive);
         compound.putBoolean("isMultiblock", isMultiblock);
+        compound.putBoolean("isSuperheated", isSuperheated);
         if (controllerPos != null) {
             compound.putLong("controllerPos", controllerPos.asLong());
+        }
+        if (structureOrigin != null) {
+            compound.putLong("structureOrigin", structureOrigin.asLong());
         }
     }
 
@@ -390,10 +458,16 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             computerActive = true;
         }
         isMultiblock = compound.getBoolean("isMultiblock");
+        isSuperheated = compound.getBoolean("isSuperheated");
         if (compound.contains("controllerPos")) {
             controllerPos = BlockPos.of(compound.getLong("controllerPos"));
         } else {
             controllerPos = null;
+        }
+        if (compound.contains("structureOrigin")) {
+            structureOrigin = BlockPos.of(compound.getLong("structureOrigin"));
+        } else {
+            structureOrigin = null;
         }
     }
 }

@@ -23,13 +23,18 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<StirlingEngineBlockEntity> {
+    public static final BooleanProperty MULTIBLOCK = BooleanProperty.create("multi");
+
     public StirlingEngineBlock(Properties properties) {
         super(properties);
-        registerDefaultState(super.defaultBlockState());
+        registerDefaultState(super.defaultBlockState().setValue(MULTIBLOCK, false));
     }
 
     @Override
@@ -72,9 +77,18 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
     }
 
     @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(MULTIBLOCK);
+    }
+
+    @Override
     public VoxelShape getShape(@Nullable BlockState pState, @Nullable BlockGetter pLevel, @Nullable BlockPos pPos, @Nullable CollisionContext pContext) {
         if (pState == null) {
             return PropulsionShapes.STIRLING_ENGINE.get(Direction.NORTH);
+        }
+        if (pState.getValue(MULTIBLOCK)) {
+            return Shapes.block();
         }
         Direction direction = pState.getValue(HORIZONTAL_FACING);
         return PropulsionShapes.STIRLING_ENGINE.get(direction);
