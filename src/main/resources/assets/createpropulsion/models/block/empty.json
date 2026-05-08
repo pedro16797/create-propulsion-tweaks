@@ -1,9 +1,6 @@
 {
-	"loader": "forge:separate_transforms",
-	"base": {
-		"textures": {
-			"particle": "minecraft:block/air"
-		},
-		"elements": []
-	}
+  "textures": {
+    "particle": "createpropulsion:block/stirling"
+  },
+  "elements": []
 }

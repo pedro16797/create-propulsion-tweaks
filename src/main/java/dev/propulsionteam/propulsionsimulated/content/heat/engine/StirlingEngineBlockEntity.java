@@ -166,8 +166,15 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         }
     }
 
-    private boolean isBlock(BlockPos pos, String id) {
-        return BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString().equals(id);
+    private boolean isBlockOrMulti(BlockPos pos, String id, StirlingEngineBlockEntity controller) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof StirlingEngineBlock && state.hasProperty(StirlingEngineBlock.MULTIBLOCK) && state.getValue(StirlingEngineBlock.MULTIBLOCK)) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof StirlingEngineBlockEntity s) {
+                return s.controllerPos != null && s.controllerPos.equals(controller.worldPosition);
+            }
+        }
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString().equals(id);
     }
 
     protected boolean isValid3x3x3(BlockPos origin) {
@@ -177,7 +184,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         // Bottom layer: 3x3 copper blocks
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
-                if (!isBlock(origin.offset(x, 0, z), "minecraft:copper_block")) return false;
+                if (!isBlockOrMulti(origin.offset(x, 0, z), "minecraft:copper_block", this)) return false;
             }
         }
 
@@ -187,10 +194,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
                 BlockPos pos = origin.offset(x, 1, z);
                 BlockState state = level.getBlockState(pos);
                 if (x == 1 && z == 1) { // Center: large cogwheel
-                    if (!isBlock(pos, "create:large_cogwheel")) return false;
-                    if (!state.hasProperty(RotatedPillarKineticBlock.AXIS) || state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
+                    if (!isBlockOrMulti(pos, "create:large_cogwheel", this)) return false;
+                    if (state.hasProperty(RotatedPillarKineticBlock.AXIS) && state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
                 } else if ((x == 0 || x == 2) && (z == 0 || z == 2)) { // Corners: andesite alloy
-                    if (!isBlock(pos, "create:andesite_alloy_block")) return false;
+                    if (!isBlockOrMulti(pos, "create:andesite_alloy_block", this)) return false;
                 } else { // Sides
                     boolean isFrontBack = false;
                     if (axis == Direction.Axis.X) {
@@ -200,10 +207,10 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
                     }
 
                     if (isFrontBack) { // Front/Back: shafts
-                        if (!isBlock(pos, "create:shaft")) return false;
-                        if (!state.hasProperty(RotatedPillarKineticBlock.AXIS) || state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
+                        if (!isBlockOrMulti(pos, "create:shaft", this)) return false;
+                        if (state.hasProperty(RotatedPillarKineticBlock.AXIS) && state.getValue(RotatedPillarKineticBlock.AXIS) != axis) return false;
                     } else { // Sides: sturdy blocks
-                        if (!isBlock(pos, "create:railway_casing")) return false;
+                        if (!isBlockOrMulti(pos, "create:railway_casing", this)) return false;
                     }
                 }
             }
@@ -213,14 +220,8 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
                 BlockPos pos = origin.offset(x, 2, z);
-                BlockState state = level.getBlockState(pos);
-                if (state.getBlock() instanceof StirlingEngineBlock) {
-                    if (state.getValue(StirlingEngineBlock.HORIZONTAL_FACING) != facing) return false;
-                    BlockEntity be = level.getBlockEntity(pos);
-                    if (be instanceof StirlingEngineBlockEntity s && s.isMultiblock && s.controllerPos != null && !s.controllerPos.equals(worldPosition)) return false;
-                } else {
-                    if (!isBlock(pos, "create:railway_casing")) return false;
-                }
+                if (pos.equals(worldPosition)) continue;
+                if (!isBlockOrMulti(pos, "create:railway_casing", this)) return false;
             }
         }
 
@@ -439,6 +440,11 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        if (isMultiblock && !isController()) {
+            StirlingEngineBlockEntity controller = getControllerBE();
+            if (controller != null) return controller.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        }
+
         boolean active = isEngineActive();
 
         String status;
