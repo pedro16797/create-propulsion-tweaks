@@ -3,6 +3,7 @@ package dev.propulsionteam.propulsionsimulated.registries;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlockEntity;
+import dev.propulsionteam.propulsionsimulated.content.heat.engine.multi.StirlingMultiBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlockEntity;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_vector_thruster.CreativeVectorThrusterBlockEntity;
@@ -58,6 +59,10 @@ public class PropulsionBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StirlingEngineBlockEntity>> STIRLING_ENGINE_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("stirling_engine_block_entity",
             () -> BlockEntityType.Builder.of((pos, state) -> new StirlingEngineBlockEntity(pos, state), PropulsionBlocks.STIRLING_ENGINE_BLOCK.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StirlingMultiBlockEntity>> STIRLING_MULTI_BLOCK_ENTITY =
+        BLOCK_ENTITY_TYPES.register("stirling_multi_block_entity",
+            () -> BlockEntityType.Builder.of((pos, state) -> new StirlingMultiBlockEntity(pos, state), PropulsionBlocks.STIRLING_MULTI.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TiltAdapterBlockEntity>> TILT_ADAPTER_BLOCK_ENTITY =
         BLOCK_ENTITY_TYPES.register("tilt_adapter_block_entity",

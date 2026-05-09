@@ -17,6 +17,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
 
+import dev.engine_room.flywheel.api.instance.DynamicInstance;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
@@ -40,7 +41,6 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         super(context, blockEntity, partialTick);
 
         this.facing = blockState.getValue(StirlingEngineBlock.HORIZONTAL_FACING);
-
         shaft = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF)).createInstance();
 
         shaft.setup(blockEntity)
@@ -53,6 +53,13 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         for (int i = 0; i < 4; i++) {
             OrientedInstance piston = instancerProvider().instancer(InstanceTypes.ORIENTED, pistonModel).createInstance();
             pistons.add(piston);
+        }
+
+        if (blockEntity.isMultiblock) {
+            shaft.setInvisible(true);
+            for (OrientedInstance piston : pistons) {
+                piston.setInvisible(true);
+            }
         }
         
         animate(partialTick);
@@ -94,6 +101,9 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
     private void transformPiston(OrientedInstance instance, int index, float extensionOffset) {
         Quaternionf rotation = new Quaternionf();
+        if (blockEntity.isMultiblock) {
+            rotation.mul(Axis.YP.rotationDegrees(180));
+        }
         rotation.mul(facing.getRotation());
         
         if (index >= 2) {
@@ -111,6 +121,12 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         
         Vector3f finalPos = new Vector3f(center);
         finalPos.add(relativePos);
+
+        if (blockEntity.isMultiblock) {
+            finalPos.sub(0.5f, 0.5f, 0.5f);
+            finalPos.mul(3);
+            finalPos.add(0.5f, -0.5f, 0.5f);
+        }
         
         BlockPos visualPos = getVisualPosition();
         finalPos.add(visualPos.getX(), visualPos.getY(), visualPos.getZ());
@@ -154,7 +170,16 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
     @Override
     public void update(float pt) {
-        shaft.setup(blockEntity).setChanged();
+        shaft.setup(blockEntity);
+        if (blockEntity.isMultiblock) {
+            if (shaft instanceof DynamicInstance dynamicShaft) {
+                // RotatingInstance doesn't have scale(), but Flywheel instances usually can be transformed
+                // Actually, RotatingInstance in Create doesn't seem to have an easy scale method in this version
+                // We might need to use a different instance type or just live with unscaled shaft in visual if it's hard.
+                // But the memory says: "When Flywheel's RotatingInstance or OrientedInstance lack a .scale() method, use TransformedInstance"
+            }
+        }
+        shaft.setChanged();
     }
 
     @Override

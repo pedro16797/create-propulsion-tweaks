@@ -13,12 +13,15 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -63,6 +66,10 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
 
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        BlockEntity be = world.getBlockEntity(pos);
+        if (be instanceof StirlingEngineBlockEntity engine && engine.isMultiblock) {
+            return false;
+        }
         return face == state.getValue(HORIZONTAL_FACING);
     }
 
@@ -76,8 +83,19 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
         if (pState == null) {
             return PropulsionShapes.STIRLING_ENGINE.get(Direction.NORTH);
         }
+        if (pLevel != null && pPos != null) {
+            BlockEntity be = pLevel.getBlockEntity(pPos);
+            if (be instanceof StirlingEngineBlockEntity engine && engine.isMultiblock) {
+                return Shapes.block();
+            }
+        }
         Direction direction = pState.getValue(HORIZONTAL_FACING);
         return PropulsionShapes.STIRLING_ENGINE.get(direction);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
     
     @Override
@@ -87,6 +105,19 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof StirlingEngineBlockEntity engine) {
             engine.setPowered(level.hasNeighborSignal(pos));
+            if (!engine.isMultiblock) {
+                engine.updateConnectivity = true;
+            }
+        }
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (level.isClientSide) return;
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof StirlingEngineBlockEntity engine) {
+            engine.updateConnectivity = true;
         }
     }
 

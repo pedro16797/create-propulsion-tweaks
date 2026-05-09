@@ -4,6 +4,7 @@ import dev.propulsionteam.propulsionsimulated.CreatePropulsion;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.liquid.LiquidBurnerBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.burners.solid.SolidBurnerBlock;
 import dev.propulsionteam.propulsionsimulated.content.heat.engine.StirlingEngineBlock;
+import dev.propulsionteam.propulsionsimulated.content.heat.engine.multi.StirlingMultiBlock;
 import dev.propulsionteam.propulsionsimulated.content.redstone_transmission.RedstoneTransmissionBlock;
 import dev.propulsionteam.propulsionsimulated.content.tilt_adapter.TiltAdapterBlock;
 import dev.propulsionteam.propulsionsimulated.content.thruster.creative_thruster.CreativeThrusterBlock;
@@ -55,6 +56,9 @@ public class PropulsionBlocks {
     public static final DeferredBlock<StirlingEngineBlock> STIRLING_ENGINE_BLOCK = BLOCKS.register("stirling_engine",
         () -> new StirlingEngineBlock(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.COPPER)
             .requiresCorrectToolForDrops().strength(2.5f, 2.0f).noOcclusion()));
+    public static final DeferredBlock<StirlingMultiBlock> STIRLING_MULTI = BLOCKS.register("stirling_multi",
+        () -> new StirlingMultiBlock(Block.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
+            .requiresCorrectToolForDrops().strength(5.5f, 4.0f).noOcclusion()));
     public static final DeferredBlock<TiltAdapterBlock> TILT_ADAPTER_BLOCK = BLOCKS.register("tilt_adapter",
         () -> new TiltAdapterBlock(Block.Properties.of().mapColor(MapColor.PODZOL)
             .sound(SoundType.METAL).strength(2.5f, 2.0f).noOcclusion()));
@@ -81,6 +85,7 @@ public class PropulsionBlocks {
         registerDefaultBlockItem("solid_burner", SOLID_BURNER);
         registerDefaultBlockItem("liquid_burner", LIQUID_BURNER);
         registerDefaultBlockItem("stirling_engine", STIRLING_ENGINE_BLOCK);
+        registerDefaultBlockItem("stirling_multi", STIRLING_MULTI);
         registerDefaultBlockItem("tilt_adapter", TILT_ADAPTER_BLOCK);
         registerDefaultBlockItem("wing", WING_BLOCK);
         registerDefaultBlockItem("tempered_wing", TEMPERED_WING_BLOCK);
