@@ -60,10 +60,15 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
         if (blockEntity.isMultiblock) {
             PoseStack ms = new PoseStack();
-            ms.translate(0.5, -0.5, 0.5);
-            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.translate(-1, -2, -1);
             ms.scale(3, 3, 3);
+            ms.translate(0.5, 0.5, 0.5);
+            ms.mulPose(Axis.YP.rotationDegrees(180));
             ms.translate(-0.5, -0.5, -0.5);
+            body.setTransform(ms);
+        } else {
+            PoseStack ms = new PoseStack();
+            ms.scale(0, 0, 0);
             body.setTransform(ms);
         }
         
@@ -85,14 +90,14 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
         PoseStack shaftMs = new PoseStack();
         if (blockEntity.isMultiblock) {
-            shaftMs.translate(0.5, -0.5, 0.5);
-            shaftMs.mulPose(Axis.YP.rotationDegrees(180));
+            shaftMs.translate(-1, -2, -1);
             shaftMs.scale(3, 3, 3);
+            shaftMs.translate(0.5, 0.5, 0.5);
+            shaftMs.mulPose(Axis.YP.rotationDegrees(180));
             shaftMs.translate(-0.5, -0.5, -0.5);
         }
         shaftMs.translate(0.5, 0.5, 0.5);
         shaftMs.mulPose(facing.getRotation());
-        shaftMs.mulPose(Axis.YP.rotationDegrees(180));
         shaftMs.mulPose(Axis.XP.rotationDegrees(angle * 180f / (float)Math.PI));
         shaftMs.translate(-0.5, -0.5, -0.5);
         shaft.setTransform(shaftMs).setChanged();
@@ -126,9 +131,10 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     private void transformPiston(TransformedInstance instance, int index, float extensionOffset) {
         PoseStack ms = new PoseStack();
         if (blockEntity.isMultiblock) {
-            ms.translate(0.5, -0.5, 0.5);
-            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.translate(-1, -2, -1);
             ms.scale(3, 3, 3);
+            ms.translate(0.5, 0.5, 0.5);
+            ms.mulPose(Axis.YP.rotationDegrees(180));
             ms.translate(-0.5, -0.5, -0.5);
         }
 

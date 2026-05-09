@@ -39,29 +39,46 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         
         ms.pushPose();
         if (blockEntity.isMultiblock) {
-            ms.translate(0.5, -0.5, 0.5);
-            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.translate(-1, -2, -1);
             ms.scale(3, 3, 3);
-            ms.translate(-0.5, -0.5, -0.5);
 
             // Render the engine body (it's hidden from the block itself)
+            ms.pushPose();
+            ms.translate(0.5, 0.5, 0.5);
+            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.translate(-0.5, -0.5, -0.5);
             renderBlock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction);
+            ms.popPose();
+
+            // Render shaft on the back side (now at the front due to YP 180)
+            float time = AnimationTickHolder.getRenderTime(level);
+            float speed = blockEntity.getSpeed();
+            float angle = (time * speed * 3f / 10f) % 360;
+            angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
+            angle = angle / 180f * (float) Math.PI;
+
+            SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
+            shaft.center().rotateYDegrees(180).uncenter();
+            kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
+            shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+
+            float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
+            renderPistonsMultiblock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+        } else {
+            // Render shaft on the back side
+            float time = AnimationTickHolder.getRenderTime(level);
+            float speed = blockEntity.getSpeed();
+            float angle = (time * speed * 3f / 10f) % 360;
+            angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
+            angle = angle / 180f * (float) Math.PI;
+
+            SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
+            kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
+            shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+
+            float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
+            renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         }
-
-        // Render shaft on the back side
-        float time = AnimationTickHolder.getRenderTime(level);
-        float speed = blockEntity.getSpeed();
-        float angle = (time * speed * 3f / 10f) % 360;
-        angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
-        angle = angle / 180f * (float) Math.PI;
-        
-        SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
-        shaft.center().rotateYDegrees(180).uncenter();
-        kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
-        shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
-
-        float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
-        renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         ms.popPose();
     }
 
@@ -72,6 +89,52 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         }
         SuperByteBuffer body = CachedBuffers.block(state);
         body.light(light).overlay(overlay).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+    }
+
+    private void renderPistonsMultiblock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {
+        BlockState state = blockEntity.getBlockState();
+        VertexConsumer cutoutVB = bufferSource.getBuffer(RenderType.cutoutMipped());
+        Level level = blockEntity.getLevel();
+        if (level == null) return;
+        float time = AnimationTickHolder.getRenderTime(level);
+
+        SuperByteBuffer pistonModel = CachedBuffers.partial(PropulsionPartialModels.STIRLING_ENGINE_PISTON, state);
+
+        float timeSeconds = time / 20.0f;
+        float effectiveRevolutionPeriod = Float.MAX_VALUE;
+        if (speed > MathUtility.epsilon) {
+            effectiveRevolutionPeriod = PropulsionConfig.STIRLING_REVOLUTION_PERIOD.get().floatValue() / speed;
+        }
+        float crankRadius = PropulsionConfig.STIRLING_CRANK_RADIUS.get().floatValue();
+        float conrodLength = PropulsionConfig.STIRLING_CONROD_LENGTH.get().floatValue();
+        Vector4f normalizedExtensions = calculateExtensions(timeSeconds, crankRadius, conrodLength, effectiveRevolutionPeriod);
+
+        for (int i = 0; i < 4; i++) {
+            float normalized;
+            if (i == 0) normalized = normalizedExtensions.x;
+            else if (i == 1) normalized = normalizedExtensions.y;
+            else if (i == 2) normalized = normalizedExtensions.z;
+            else normalized = normalizedExtensions.w;
+
+            final float offsetDistance = 2 / 16.0f;
+            float offset = Math.min(offsetDistance - 0.001f, normalized * offsetDistance); //Avoid z-fighting
+
+            ms.pushPose();
+            ms.translate(0.5, 0.5, 0.5);
+            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.mulPose(direction.getRotation());
+
+            if (i >= 2) {
+                ms.mulPose(Axis.ZP.rotationDegrees(180));
+            }
+
+            ms.mulPose(Axis.XP.rotationDegrees(270));
+            ms.translate(-0.5, -0.5, -0.5);
+
+            ms.translate(offset, 0, offsetArray[i] / 16.0f);
+            pistonModel.light(light).overlay(overlay).renderInto(ms, cutoutVB);
+            ms.popPose();
+        }
     }
 
     private void renderPistons(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {

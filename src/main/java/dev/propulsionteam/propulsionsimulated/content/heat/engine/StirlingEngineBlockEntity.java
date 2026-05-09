@@ -117,7 +117,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
 
         if (isController() && isMultiblock) {
             if (!isValidMultiblock(worldPosition.offset(-1, -2, -1))) {
-                disassembleMulti();
+                disassembleMulti(null);
             }
         }
 
@@ -241,10 +241,17 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         this.sendData();
     }
 
-    public void disassembleMulti() {
+    public void disassembleMulti(@javax.annotation.Nullable BlockPos brokenPos) {
         if (!isController() || !isMultiblock) return;
         this.isMultiblock = false;
-        level.setBlock(worldPosition, getBlockState().setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
+
+        if (brokenPos == null || !brokenPos.equals(worldPosition)) {
+            BlockState controllerState = getBlockState();
+            if (controllerState.getBlock() instanceof StirlingEngineBlock && controllerState.getValue(StirlingEngineBlock.MULTIBLOCK)) {
+                level.setBlock(worldPosition, controllerState.setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
+            }
+        }
+
         BlockPos origin = worldPosition.offset(-1, -2, -1);
 
         for (int y = 0; y < 3; y++) {
@@ -252,15 +259,20 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
                 for (int z = 0; z < 3; z++) {
                     if (x == 1 && y == 2 && z == 1) continue;
                     BlockPos pos = origin.offset(x, y, z);
-                    BlockEntity be = level.getBlockEntity(pos);
-                    if (be instanceof StirlingMultiBlockEntity multiBE) {
-                        BlockState oldState = multiBE.getOriginalState();
-                        CompoundTag oldTag = multiBE.getOriginalTag();
-                        level.setBlock(pos, oldState, 3);
-                        if (oldTag != null) {
-                            BlockEntity restoredBE = level.getBlockEntity(pos);
-                            if (restoredBE != null) {
-                                restoredBE.loadWithComponents(oldTag, level.registryAccess());
+                    if (pos.equals(brokenPos)) continue;
+
+                    BlockState currentState = level.getBlockState(pos);
+                    if (currentState.getBlock() instanceof StirlingMultiBlock) {
+                        BlockEntity be = level.getBlockEntity(pos);
+                        if (be instanceof StirlingMultiBlockEntity multiBE) {
+                            BlockState oldState = multiBE.getOriginalState();
+                            CompoundTag oldTag = multiBE.getOriginalTag();
+                            level.setBlock(pos, oldState, 3);
+                            if (oldTag != null) {
+                                BlockEntity restoredBE = level.getBlockEntity(pos);
+                                if (restoredBE != null) {
+                                    restoredBE.loadWithComponents(oldTag, level.registryAccess());
+                                }
                             }
                         }
                     }

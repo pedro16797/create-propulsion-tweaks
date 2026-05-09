@@ -49,6 +49,11 @@ public class StirlingMultiBlock extends KineticBlock implements IBE<StirlingMult
     }
 
     @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.block();
+    }
+
+    @Override
     public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
     }
@@ -94,7 +99,7 @@ public class StirlingMultiBlock extends KineticBlock implements IBE<StirlingMult
             if (be instanceof StirlingMultiBlockEntity multiBE) {
                 StirlingEngineBlockEntity controller = multiBE.getControllerBE();
                 if (controller != null) {
-                    controller.disassembleMulti();
+                    controller.disassembleMulti(pos);
                 }
             }
         }

@@ -95,11 +95,8 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
         if (pState == null) {
             return PropulsionShapes.STIRLING_ENGINE.get(Direction.NORTH);
         }
-        if (pLevel != null && pPos != null) {
-            BlockEntity be = pLevel.getBlockEntity(pPos);
-            if (be instanceof StirlingEngineBlockEntity engine && engine.isMultiblock) {
-                return Shapes.block();
-            }
+        if (pState.getValue(MULTIBLOCK)) {
+            return Shapes.block();
         }
         Direction direction = pState.getValue(HORIZONTAL_FACING);
         return PropulsionShapes.STIRLING_ENGINE.get(direction);
@@ -140,7 +137,7 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
             if (be instanceof StirlingEngineBlockEntity engine) {
                 StirlingEngineBlockEntity controller = engine.isController() ? engine : engine.getControllerBE();
                 if (controller != null) {
-                    controller.disassembleMulti();
+                    controller.disassembleMulti(pos);
                 }
             }
         }
