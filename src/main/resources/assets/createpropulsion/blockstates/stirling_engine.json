@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "createpropulsion:block/stirling_base", "y": 180 },
-    "facing=south": { "model": "createpropulsion:block/stirling_base", "y": 0   },
-    "facing=west" : { "model": "createpropulsion:block/stirling_base", "y": 90  },
-    "facing=east" : { "model": "createpropulsion:block/stirling_base", "y": 270 }
+    "facing=north,multi=false": { "model": "createpropulsion:block/stirling_base", "y": 180 },
+    "facing=south,multi=false": { "model": "createpropulsion:block/stirling_base", "y": 0   },
+    "facing=west,multi=false" : { "model": "createpropulsion:block/stirling_base", "y": 90  },
+    "facing=east,multi=false" : { "model": "createpropulsion:block/stirling_base", "y": 270 },
+    "facing=north,multi=true": { "model": "createpropulsion:block/stirling_base", "y": 180 },
+    "facing=south,multi=true": { "model": "createpropulsion:block/stirling_base", "y": 0   },
+    "facing=west,multi=true" : { "model": "createpropulsion:block/stirling_base", "y": 90  },
+    "facing=east,multi=true" : { "model": "createpropulsion:block/stirling_base", "y": 270 }
   }
 }

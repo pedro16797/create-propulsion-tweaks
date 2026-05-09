@@ -46,9 +46,6 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
 
             // Render the engine body (it's hidden from the block itself)
             renderBlock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction);
-        } else {
-            // If we are in multiblock mode, we shouldn't render the 1x model.
-            // But this renderSafe is for the controller.
         }
 
         // Render shaft on the back side
@@ -59,6 +56,7 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         angle = angle / 180f * (float) Math.PI;
         
         SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
+        shaft.center().rotateYDegrees(180).uncenter();
         kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
         shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
 
@@ -69,6 +67,9 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
 
     private void renderBlock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction) {
         BlockState state = blockEntity.getBlockState();
+        if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+            state = state.setValue(StirlingEngineBlock.MULTIBLOCK, false);
+        }
         SuperByteBuffer body = CachedBuffers.block(state);
         body.light(light).overlay(overlay).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
     }
