@@ -23,11 +23,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity implements IHeatConsumer {
     public static final float MAX_GENERATED_RPM = 256.0f;
@@ -207,6 +208,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     protected void formMulti(BlockPos origin, Direction facing) {
+        level.setBlock(worldPosition, getBlockState().setValue(StirlingEngineBlock.MULTIBLOCK, true), 3);
         BlockPos outputPos = origin.offset(1, 1, 1).relative(facing);
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 3; x++) {
@@ -244,6 +246,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
     public void disassembleMulti() {
         if (!isController() || !isMultiblock) return;
         this.isMultiblock = false;
+        level.setBlock(worldPosition, getBlockState().setValue(StirlingEngineBlock.MULTIBLOCK, false), 3);
         BlockPos origin = worldPosition.offset(-1, -2, -1);
 
         for (int y = 0; y < 3; y++) {

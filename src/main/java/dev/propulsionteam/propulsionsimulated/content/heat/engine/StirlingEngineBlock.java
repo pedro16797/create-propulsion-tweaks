@@ -26,13 +26,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<StirlingEngineBlockEntity> {
+    public static final BooleanProperty MULTIBLOCK = BooleanProperty.create("multi");
+
     public StirlingEngineBlock(Properties properties) {
         super(properties);
-        registerDefaultState(super.defaultBlockState());
+        registerDefaultState(super.defaultBlockState().setValue(MULTIBLOCK, false));
     }
 
     @Override
@@ -74,6 +80,12 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
     }
 
     @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(MULTIBLOCK);
+        super.createBlockStateDefinition(builder);
+    }
+
+    @Override
     public Axis getRotationAxis(BlockState state) {
         return state.getValue(HORIZONTAL_FACING).getAxis();
     }
@@ -95,7 +107,7 @@ public class StirlingEngineBlock extends HorizontalKineticBlock implements IBE<S
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return state.getValue(MULTIBLOCK) ? RenderShape.INVISIBLE : RenderShape.MODEL;
     }
     
     @Override

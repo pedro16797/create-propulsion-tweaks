@@ -11,18 +11,19 @@ import org.joml.Vector4f;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
 
-import dev.engine_room.flywheel.api.instance.DynamicInstance;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.OrientedInstance;
+import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.createmod.catnip.animation.AnimationTickHolder;
@@ -32,6 +33,7 @@ import net.minecraft.core.Direction;
 public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngineBlockEntity> implements SimpleDynamicVisual {
     protected final RotatingInstance shaft;
     protected final List<OrientedInstance> pistons = new ArrayList<>(4);
+    protected final TransformedInstance body;
     
     private final static int[] offsetArray = {0, 7, 2, 9};
     private final Direction facing;
@@ -41,6 +43,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         super(context, blockEntity, partialTick);
 
         this.facing = blockState.getValue(StirlingEngineBlock.HORIZONTAL_FACING);
+        body = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.block(blockState)).createInstance();
         shaft = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF)).createInstance();
 
         shaft.setup(blockEntity)
@@ -56,10 +59,12 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         }
 
         if (blockEntity.isMultiblock) {
-            shaft.setInvisible(true);
-            for (OrientedInstance piston : pistons) {
-                piston.setInvisible(true);
-            }
+            PoseStack ms = new PoseStack();
+            ms.translate(0.5, -0.5, 0.5);
+            ms.mulPose(Axis.YP.rotationDegrees(180));
+            ms.scale(3, 3, 3);
+            ms.translate(-0.5, -0.5, -0.5);
+            body.setTransform(ms);
         }
         
         animate(partialTick);
@@ -171,20 +176,13 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     public void update(float pt) {
         shaft.setup(blockEntity);
-        if (blockEntity.isMultiblock) {
-            if (shaft instanceof DynamicInstance dynamicShaft) {
-                // RotatingInstance doesn't have scale(), but Flywheel instances usually can be transformed
-                // Actually, RotatingInstance in Create doesn't seem to have an easy scale method in this version
-                // We might need to use a different instance type or just live with unscaled shaft in visual if it's hard.
-                // But the memory says: "When Flywheel's RotatingInstance or OrientedInstance lack a .scale() method, use TransformedInstance"
-            }
-        }
         shaft.setChanged();
     }
 
     @Override
     public void updateLight(float partialTick) {
         relight(shaft);
+        relight(body);
         for (OrientedInstance piston : pistons) {
             relight(piston);
         }
@@ -193,6 +191,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     protected void _delete() {
         shaft.delete();
+        body.delete();
         for (OrientedInstance piston : pistons) {
             piston.delete();
         }
@@ -202,6 +201,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     public void collectCrumblingInstances(Consumer<Instance> consumer) {
         consumer.accept(shaft);
+        consumer.accept(body);
         for (OrientedInstance piston : pistons) {
             consumer.accept(piston);
         }

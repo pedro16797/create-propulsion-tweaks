@@ -43,6 +43,9 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
             ms.mulPose(Axis.YP.rotationDegrees(180));
             ms.scale(3, 3, 3);
             ms.translate(-0.5, -0.5, -0.5);
+
+            // Render the engine body (it's hidden from the block itself)
+            renderBlock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction);
         } else {
             // If we are in multiblock mode, we shouldn't render the 1x model.
             // But this renderSafe is for the controller.
@@ -62,6 +65,12 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
         renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         ms.popPose();
+    }
+
+    private void renderBlock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction) {
+        BlockState state = blockEntity.getBlockState();
+        SuperByteBuffer body = CachedBuffers.block(state);
+        body.light(light).overlay(overlay).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
     }
 
     private void renderPistons(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {

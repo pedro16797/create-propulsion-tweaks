@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 
 public class StirlingMultiBlockEntity extends GeneratingKineticBlockEntity {
     @Nullable
-    protected BlockPos controllerPos;
+    public BlockPos controllerPos;
     protected BlockState originalState;
     protected CompoundTag originalTag;
     protected boolean isOutput = false;
