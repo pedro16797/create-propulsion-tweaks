@@ -79,9 +79,6 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         if (blockEntity.isMultiblock) {
             bodyMs.translate(-1, -2, -1);
             bodyMs.scale(3, 3, 3);
-            bodyMs.translate(0.5, 0.5, 0.5);
-            bodyMs.mulPose(Axis.YP.rotationDegrees(180));
-            bodyMs.translate(-0.5, -0.5, -0.5);
         } else {
             bodyMs.scale(0, 0, 0);
         }
@@ -92,13 +89,10 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         if (blockEntity.isMultiblock) {
             shaftMs.translate(-1, -2, -1);
             shaftMs.scale(3, 3, 3);
-            shaftMs.translate(0.5, 0.5, 0.5);
-            shaftMs.mulPose(Axis.YP.rotationDegrees(180));
-            shaftMs.translate(-0.5, -0.5, -0.5);
         }
         shaftMs.translate(0.5, 0.5, 0.5);
         shaftMs.mulPose(facing.getRotation());
-        shaftMs.mulPose(Axis.XP.rotationDegrees(angle * 180f / (float)Math.PI));
+        shaftMs.mulPose(Axis.ZP.rotationDegrees(angle * 180f / (float)Math.PI));
         shaftMs.translate(-0.5, -0.5, -0.5);
         shaft.setTransform(shaftMs).setChanged();
 
@@ -134,9 +128,6 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         if (blockEntity.isMultiblock) {
             ms.translate(-1, -2, -1);
             ms.scale(3, 3, 3);
-            ms.translate(0.5, 0.5, 0.5);
-            ms.mulPose(Axis.YP.rotationDegrees(180));
-            ms.translate(-0.5, -0.5, -0.5);
         }
 
         ms.translate(0.5, 0.5, 0.5);
