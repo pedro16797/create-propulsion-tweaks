@@ -58,20 +58,6 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
             pistons.add(piston);
         }
 
-        if (blockEntity.isMultiblock) {
-            PoseStack ms = new PoseStack();
-            ms.translate(-1, -2, -1);
-            ms.scale(3, 3, 3);
-            ms.translate(0.5, 0.5, 0.5);
-            ms.mulPose(Axis.YP.rotationDegrees(180));
-            ms.translate(-0.5, -0.5, -0.5);
-            body.setTransform(ms);
-        } else {
-            PoseStack ms = new PoseStack();
-            ms.scale(0, 0, 0);
-            body.setTransform(ms);
-        }
-        
         animate(partialTick);
     }
 
@@ -87,6 +73,18 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         float angle = (time * speed * 3f / 10f) % 360;
         angle += StirlingEngineRenderer.getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), facing.getAxis());
         angle = angle / 180f * (float) Math.PI;
+
+        PoseStack bodyMs = new PoseStack();
+        if (blockEntity.isMultiblock) {
+            bodyMs.translate(-1, -2, -1);
+            bodyMs.scale(3, 3, 3);
+            bodyMs.translate(0.5, 0.5, 0.5);
+            bodyMs.mulPose(Axis.YP.rotationDegrees(180));
+            bodyMs.translate(-0.5, -0.5, -0.5);
+        } else {
+            bodyMs.scale(0, 0, 0);
+        }
+        body.setTransform(bodyMs).setChanged();
 
         PoseStack shaftMs = new PoseStack();
         if (blockEntity.isMultiblock) {

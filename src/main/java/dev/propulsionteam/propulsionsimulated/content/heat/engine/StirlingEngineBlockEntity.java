@@ -507,5 +507,16 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
             controllerPos = null;
         }
     }
+
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
+        if (isMultiblock && isController()) {
+            return new net.minecraft.world.phys.AABB(
+                worldPosition.getX() - 1.0, worldPosition.getY() - 2.0, worldPosition.getZ() - 1.0,
+                worldPosition.getX() + 2.0, worldPosition.getY() + 1.0, worldPosition.getZ() + 2.0
+            );
+        }
+        return super.getRenderBoundingBox();
+    }
 }
 
