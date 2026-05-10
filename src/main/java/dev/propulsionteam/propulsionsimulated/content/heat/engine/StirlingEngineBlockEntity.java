@@ -409,7 +409,7 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
         if (rpm == 0) return 0f;
 
         if (isMultiblock) {
-            float totalCapacity = 0;
+            float totalSU = 0;
             BlockPos origin = worldPosition.offset(-1, -2, -1);
             for (int x = 0; x < 3; x++) {
                 for (int z = 0; z < 3; z++) {
@@ -417,14 +417,15 @@ public class StirlingEngineBlockEntity extends GeneratingKineticBlockEntity impl
                     BlockState heatState = level.getBlockState(heatPos);
                     HeatLevel heat = getHeatLevel(level, heatPos, heatState);
                     if (heat == HeatLevel.SEETHING) {
-                        totalCapacity += 32768;
+                        totalSU += 32768;
                     } else if (heat.isAtLeast(HeatLevel.KINDLED)) {
-                        totalCapacity += 16384;
+                        totalSU += 16384;
                     }
                 }
             }
-            this.lastCapacityProvided = totalCapacity;
-            return totalCapacity;
+            float capacity = totalSU / rpm;
+            this.lastCapacityProvided = capacity;
+            return capacity;
         }
 
         float stressFactor = MAX_GENERATED_RPM / rpm;

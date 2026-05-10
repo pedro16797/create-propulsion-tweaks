@@ -75,6 +75,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         angle = angle / 180f * (float) Math.PI;
 
         PoseStack bodyMs = new PoseStack();
+        bodyMs.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
         if (blockEntity.isMultiblock) {
             bodyMs.translate(-1, -2, -1);
             bodyMs.scale(3, 3, 3);
@@ -87,6 +88,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         body.setTransform(bodyMs).setChanged();
 
         PoseStack shaftMs = new PoseStack();
+        shaftMs.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
         if (blockEntity.isMultiblock) {
             shaftMs.translate(-1, -2, -1);
             shaftMs.scale(3, 3, 3);
@@ -128,6 +130,7 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
     private void transformPiston(TransformedInstance instance, int index, float extensionOffset) {
         PoseStack ms = new PoseStack();
+        ms.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
         if (blockEntity.isMultiblock) {
             ms.translate(-1, -2, -1);
             ms.scale(3, 3, 3);
