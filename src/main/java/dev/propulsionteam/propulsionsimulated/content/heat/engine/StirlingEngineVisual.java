@@ -11,6 +11,7 @@ import org.joml.Vector4f;
 import dev.propulsionteam.propulsionsimulated.PropulsionConfig;
 import dev.propulsionteam.propulsionsimulated.registries.PropulsionPartialModels;
 import dev.propulsionteam.propulsionsimulated.utility.math.MathUtility;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
@@ -22,15 +23,18 @@ import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.OrientedInstance;
+import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.createmod.catnip.animation.AnimationTickHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngineBlockEntity> implements SimpleDynamicVisual {
-    protected final RotatingInstance shaft;
-    protected final List<OrientedInstance> pistons = new ArrayList<>(4);
+    protected final TransformedInstance shaft;
+    protected final List<TransformedInstance> pistons = new ArrayList<>(4);
+    protected final TransformedInstance body;
     
     private final static int[] offsetArray = {0, 7, 2, 9};
     private final Direction facing;
@@ -40,21 +44,20 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         super(context, blockEntity, partialTick);
 
         this.facing = blockState.getValue(StirlingEngineBlock.HORIZONTAL_FACING);
-
-        shaft = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT_HALF)).createInstance();
-
-        shaft.setup(blockEntity)
-             .setPosition(getVisualPosition()) 
-             .rotateToFace(Direction.SOUTH, facing)
-             .setChanged();
+        BlockState renderState = blockState;
+        if (renderState.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+            renderState = renderState.setValue(StirlingEngineBlock.MULTIBLOCK, false);
+        }
+        body = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.block(renderState)).createInstance();
+        shaft = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.SHAFT_HALF)).createInstance();
 
         var pistonModel = Models.partial(PropulsionPartialModels.STIRLING_ENGINE_PISTON);
         
         for (int i = 0; i < 4; i++) {
-            OrientedInstance piston = instancerProvider().instancer(InstanceTypes.ORIENTED, pistonModel).createInstance();
+            TransformedInstance piston = instancerProvider().instancer(InstanceTypes.TRANSFORMED, pistonModel).createInstance();
             pistons.add(piston);
         }
-        
+
         animate(partialTick);
     }
 
@@ -65,12 +68,39 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
 
     private void animate(float partialTick) {
         float time = AnimationTickHolder.getRenderTime(blockEntity.getLevel());
-        float timeSeconds = time / 20.0f;
         
-        float speed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
+        float speed = blockEntity.getSpeed();
+        float angle = (time * speed * 3f / 10f) % 360;
+        angle += StirlingEngineRenderer.getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), facing.getAxis());
+        angle = angle / 180f * (float) Math.PI;
+
+        PoseStack bodyMs = new PoseStack();
+        bodyMs.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
+        if (blockEntity.isMultiblock) {
+            bodyMs.translate(-1, -2, -1);
+            bodyMs.scale(3, 3, 3);
+        } else {
+            bodyMs.scale(0, 0, 0);
+        }
+        body.setTransform(bodyMs).setChanged();
+
+        PoseStack shaftMs = new PoseStack();
+        shaftMs.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
+        if (blockEntity.isMultiblock) {
+            shaftMs.translate(-1, -2, -1);
+            shaftMs.scale(3, 3, 3);
+        }
+        shaftMs.translate(0.5, 0.5, 0.5);
+        shaftMs.mulPose(facing.getRotation());
+        shaftMs.mulPose(Axis.ZP.rotationDegrees(angle * 180f / (float)Math.PI));
+        shaftMs.translate(-0.5, -0.5, -0.5);
+        shaft.setTransform(shaftMs).setChanged();
+
+        float timeSeconds = time / 20.0f;
+        float pistonSpeedScale = Math.abs(speed / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
         float effectiveRevolutionPeriod = Float.MAX_VALUE;
-        if (speed > MathUtility.epsilon) {
-            effectiveRevolutionPeriod = PropulsionConfig.STIRLING_REVOLUTION_PERIOD.get().floatValue() / speed;
+        if (pistonSpeedScale > MathUtility.epsilon) {
+            effectiveRevolutionPeriod = PropulsionConfig.STIRLING_REVOLUTION_PERIOD.get().floatValue() / pistonSpeedScale;
         }
 
         float crankRadius = PropulsionConfig.STIRLING_CRANK_RADIUS.get().floatValue();
@@ -92,75 +122,38 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
         }
     }
 
-    private void transformPiston(OrientedInstance instance, int index, float extensionOffset) {
-        Quaternionf rotation = new Quaternionf();
-        rotation.mul(facing.getRotation());
+    private void transformPiston(TransformedInstance instance, int index, float extensionOffset) {
+        PoseStack ms = new PoseStack();
+        ms.translate(getVisualPosition().getX(), getVisualPosition().getY(), getVisualPosition().getZ());
+        if (blockEntity.isMultiblock) {
+            ms.translate(-1, -2, -1);
+            ms.scale(3, 3, 3);
+        }
+
+        ms.translate(0.5, 0.5, 0.5);
+        ms.mulPose(facing.getRotation());
         
         if (index >= 2) {
-            rotation.mul(Axis.ZP.rotationDegrees(180));
-        }
-        rotation.mul(Axis.XP.rotationDegrees(270));
-
-        instance.rotation(rotation);
-
-        Vector3f localOffset = new Vector3f(extensionOffset, 0, offsetArray[index] / 16.0f);
-        
-        Vector3f relativePos = new Vector3f(localOffset);
-        relativePos.sub(center); 
-        relativePos.rotate(rotation); 
-        
-        Vector3f finalPos = new Vector3f(center);
-        finalPos.add(relativePos);
-        
-        BlockPos visualPos = getVisualPosition();
-        finalPos.add(visualPos.getX(), visualPos.getY(), visualPos.getZ());
-
-        float fixX = 0;
-        float fixZ = 0;
-        
-        boolean isGroupA = index < 2;
-        boolean isGroupB = index >= 2;
-
-        switch (facing) {
-            case NORTH:
-                if (isGroupA) {
-                    fixX = -1;
-                    fixZ = -1;
-                }
-                break;
-            case SOUTH:
-                if (isGroupB) {
-                    fixX = -1;
-                    fixZ = -1;
-                }
-                break;
-            case EAST:
-                if (isGroupB) fixX = -1;
-                if (isGroupA) fixZ = -1;
-                break;
-            case WEST:
-                if (isGroupB) fixZ = -1;
-                if (isGroupA) fixX = -1;
-                break;
-            default:
-                break;
+            ms.mulPose(Axis.ZP.rotationDegrees(180));
         }
 
-        finalPos.add(fixX, 0, fixZ);
+        ms.mulPose(Axis.XP.rotationDegrees(270));
+        ms.translate(-0.5, -0.5, -0.5);
 
-        instance.position(finalPos);
-        instance.setChanged();
+        ms.translate(extensionOffset, 0, offsetArray[index] / 16.0f);
+
+        instance.setTransform(ms).setChanged();
     }
 
     @Override
     public void update(float pt) {
-        shaft.setup(blockEntity).setChanged();
     }
 
     @Override
     public void updateLight(float partialTick) {
         relight(shaft);
-        for (OrientedInstance piston : pistons) {
+        relight(body);
+        for (TransformedInstance piston : pistons) {
             relight(piston);
         }
     }
@@ -168,7 +161,8 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     protected void _delete() {
         shaft.delete();
-        for (OrientedInstance piston : pistons) {
+        body.delete();
+        for (TransformedInstance piston : pistons) {
             piston.delete();
         }
         pistons.clear();
@@ -177,7 +171,8 @@ public class StirlingEngineVisual extends KineticBlockEntityVisual<StirlingEngin
     @Override
     public void collectCrumblingInstances(Consumer<Instance> consumer) {
         consumer.accept(shaft);
-        for (OrientedInstance piston : pistons) {
+        consumer.accept(body);
+        for (TransformedInstance piston : pistons) {
             consumer.accept(piston);
         }
     }

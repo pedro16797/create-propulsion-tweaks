@@ -38,7 +38,10 @@ public class StirlingEngineValueBox extends ValueBoxTransform.Sided {
 
     @Override
     protected boolean isSideActive(BlockState state, Direction direction) {
-        return direction == Direction.UP;
+        if (direction != Direction.UP) return false;
+
+        // Only show if it's a normal engine or the controller of a multiblock (which is at the top center)
+        return true;
     }
 }
 

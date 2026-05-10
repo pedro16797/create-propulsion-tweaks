@@ -37,19 +37,61 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         BlockState state = blockEntity.getBlockState();
         Level level = blockEntity.getLevel();
         
-        // Render shaft on the back side
-        float time = AnimationTickHolder.getRenderTime(level);
-        float speed = blockEntity.getSpeed();
-        float angle = (time * speed * 3f / 10f) % 360;
-        angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
-        angle = angle / 180f * (float) Math.PI;
-        
-        SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
-        kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
-        shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+        ms.pushPose();
+        if (blockEntity.isMultiblock) {
+            ms.translate(-1, -2, -1);
+            ms.scale(3, 3, 3);
 
-        float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
-        renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+            // Render the engine body (it's hidden from the block itself)
+            renderBlock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction);
+
+            // Render shaft on the front side
+            renderShaft(blockEntity, ms, bufferSource, light, state, level, direction);
+
+            float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
+            renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+        } else {
+            // Render shaft on the front side
+            renderShaft(blockEntity, ms, bufferSource, light, state, level, direction);
+
+            float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
+            renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+        }
+        ms.popPose();
+    }
+
+    /**
+     * Helper method to handle the manual rotation and translation of the shaft
+     * so that it renders at the front center, pointing outward, while maintaining its spin.
+     */
+    private void renderShaft(StirlingEngineBlockEntity blockEntity, PoseStack ms, MultiBufferSource bufferSource, int light, BlockState state, Level level, Direction direction) {
+        float time = AnimationTickHolder.getRenderTime(level);
+        float angle = (time * blockEntity.getSpeed() * 3f / 10f) % 360;
+    
+        ms.pushPose();
+        ms.translate(0.5, 0.5, 0.5);
+        ms.mulPose(direction.getRotation());
+        ms.mulPose(Axis.XP.rotationDegrees(-90));
+        ms.mulPose(Axis.YP.rotationDegrees(angle));
+        ms.translate(-0.5, -0.5, -0.5); 
+    
+        SuperByteBuffer shaft = CachedBuffers.partial(AllPartialModels.SHAFT_HALF, state);
+        shaft.light(light).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+    
+        ms.popPose();
+    }
+
+    private void renderBlock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction) {
+        BlockState state = blockEntity.getBlockState();
+        if (state.hasProperty(StirlingEngineBlock.MULTIBLOCK)) {
+            state = state.setValue(StirlingEngineBlock.MULTIBLOCK, false);
+        }
+        SuperByteBuffer body = CachedBuffers.block(state);
+        body.light(light).overlay(overlay).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+    }
+
+    private void renderPistonsMultiblock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {
+        renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, speed);
     }
 
     private void renderPistons(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction, float speed) {
