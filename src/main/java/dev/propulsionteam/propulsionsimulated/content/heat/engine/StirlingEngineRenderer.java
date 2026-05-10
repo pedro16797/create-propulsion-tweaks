@@ -66,16 +66,19 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
      */
     private void renderShaft(StirlingEngineBlockEntity blockEntity, PoseStack ms, MultiBufferSource bufferSource, int light, BlockState state, Level level, Direction direction) {
         float time = AnimationTickHolder.getRenderTime(level);
-        float speed = blockEntity.getSpeed();
-        float angle = (time * speed * 3f / 10f) % 360;
-        angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
-        angle = angle / 180f * (float) Math.PI;
+        float angle = (time * blockEntity.getSpeed() * 3f / 10f) % 360;
+    
+        ms.pushPose();
+        ms.translate(0.5, 0.5, 0.5);
+        ms.mulPose(direction.getRotation());
+        ms.mulPose(Axis.XP.rotationDegrees(-90));
+        ms.mulPose(Axis.YP.rotationDegrees(angle));
+        ms.translate(-0.5, -0.5, -0.5); 
     
         SuperByteBuffer shaft = CachedBuffers.partial(AllPartialModels.SHAFT_HALF, state);
-        shaft.translate(0, 0.5, 0);
-        shaft.rotateCentered(direction.getRotation());
-        shaft.rotateCentered(angle, direction.getAxis());
         shaft.light(light).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+    
+        ms.popPose();
     }
 
     private void renderBlock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction) {
