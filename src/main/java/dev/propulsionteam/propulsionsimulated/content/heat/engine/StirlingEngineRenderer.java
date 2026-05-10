@@ -70,28 +70,12 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
         float angle = (time * speed * 3f / 10f) % 360;
         angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
         angle = angle / 180f * (float) Math.PI;
-
-        ms.pushPose();
-        
-        // Move to the center of the block
-        ms.translate(0.5, 0.5, 0.5);
-        
-        // Orient the PoseStack to face the block's direction
-        Direction alignDir = direction.getOpposite();
-        ms.mulPose(Axis.YP.rotationDegrees(-alignDir.toYRot()));
-        ms.mulPose(Axis.XP.rotationDegrees(90));
-        
-        // Move the center back so the model connects from the center of the block to the face
-        ms.translate(-0.5, -0.5, -0.5);
-
-        // Fetch the raw unrotated shaft model instead of partialFacing
+    
         SuperByteBuffer shaft = CachedBuffers.partial(AllPartialModels.SHAFT_HALF, state);
-        
-        // Spin the shaft along its LOCAL Y axis (which the PoseStack has now rotated to point forwards)
-        kineticRotationTransform(shaft, blockEntity, Direction.Axis.Y, angle, light);
-        
-        shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
-        ms.popPose();
+        shaft.translate(0, 0.5, 0);
+        shaft.rotateCentered(direction.getRotation());
+        shaft.rotateCentered(angle, direction.getAxis());
+        shaft.light(light).renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
     }
 
     private void renderBlock(StirlingEngineBlockEntity blockEntity, float partialTicks, PoseStack ms, MultiBufferSource bufferSource, int light, int overlay, Direction direction) {
