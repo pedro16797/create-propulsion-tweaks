@@ -45,34 +45,52 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
             // Render the engine body (it's hidden from the block itself)
             renderBlock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction);
 
-            // Render shaft on the back side
-            float time = AnimationTickHolder.getRenderTime(level);
-            float speed = blockEntity.getSpeed();
-            float angle = (time * speed * 3f / 10f) % 360;
-            angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
-            angle = angle / 180f * (float) Math.PI;
-
-            SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
-            kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
-            shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+            // Render shaft on the front side
+            renderShaft(blockEntity, ms, bufferSource, light, state, level, direction);
 
             float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
             renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         } else {
-            // Render shaft on the back side
-            float time = AnimationTickHolder.getRenderTime(level);
-            float speed = blockEntity.getSpeed();
-            float angle = (time * speed * 3f / 10f) % 360;
-            angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
-            angle = angle / 180f * (float) Math.PI;
-
-            SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, direction);
-            kineticRotationTransform(shaft, blockEntity, direction.getAxis(), angle, light);
-            shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
+            // Render shaft on the front side
+            renderShaft(blockEntity, ms, bufferSource, light, state, level, direction);
 
             float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
             renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         }
+        ms.popPose();
+    }
+
+    /**
+     * Helper method to handle the manual rotation and translation of the shaft
+     * so that it renders at the front center, pointing outward, while maintaining its spin.
+     */
+    private void renderShaft(StirlingEngineBlockEntity blockEntity, PoseStack ms, MultiBufferSource bufferSource, int light, BlockState state, Level level, Direction direction) {
+        float time = AnimationTickHolder.getRenderTime(level);
+        float speed = blockEntity.getSpeed();
+        float angle = (time * speed * 3f / 10f) % 360;
+        angle += getRotationOffsetForPosition(blockEntity, blockEntity.getBlockPos(), direction.getAxis());
+        angle = angle / 180f * (float) Math.PI;
+
+        ms.pushPose();
+        
+        // Move to the center of the block
+        ms.translate(0.5, 0.5, 0.5);
+        
+        // Orient the PoseStack to face the block's direction
+        Direction alignDir = direction.getOpposite();
+        ms.mulPose(Axis.YP.rotationDegrees(-alignDir.toYRot()));
+        ms.mulPose(Axis.XP.rotationDegrees(90));
+        
+        // Move the center back so the model connects from the center of the block to the face
+        ms.translate(-0.5, -0.5, -0.5);
+
+        // Fetch the raw unrotated shaft model instead of partialFacing
+        SuperByteBuffer shaft = CachedBuffers.partial(AllPartialModels.SHAFT_HALF, state);
+        
+        // Spin the shaft along its LOCAL Y axis (which the PoseStack has now rotated to point forwards)
+        kineticRotationTransform(shaft, blockEntity, Direction.Axis.Y, angle, light);
+        
+        shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
         ms.popPose();
     }
 
