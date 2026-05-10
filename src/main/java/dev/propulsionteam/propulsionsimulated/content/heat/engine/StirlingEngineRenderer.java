@@ -57,7 +57,7 @@ public class StirlingEngineRenderer extends KineticBlockEntityRenderer<StirlingE
             shaft.renderInto(ms, bufferSource.getBuffer(RenderType.solid()));
 
             float pistonSpeed = Math.abs(blockEntity.getSpeed() / StirlingEngineBlockEntity.MAX_GENERATED_RPM);
-            renderPistonsMultiblock(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
+            renderPistons(blockEntity, partialTicks, ms, bufferSource, light, overlay, direction, pistonSpeed);
         } else {
             // Render shaft on the back side
             float time = AnimationTickHolder.getRenderTime(level);
